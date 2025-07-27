@@ -1,0 +1,408 @@
+// Installer Tracking JavaScript
+
+// Global state
+let currentScenario = 'base';
+let revenueTargets = {
+    worst: 1200000,
+    base: 1500000,
+    best: 1800000
+};
+let installers = [];
+let revenueChart = null;
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    loadInstallers();
+    loadRevenueScenarios();
+    updateDashboard();
+    initializeSettings();
+});
+
+// Tab switching functionality
+function showTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    // Remove active class from all nav tabs
+    const navTabs = document.querySelectorAll('.nav-tab');
+    navTabs.forEach(tab => tab.classList.remove('active'));
+    
+    // Show selected tab content
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active class to clicked nav tab
+    event.target.classList.add('active');
+    
+    // Refresh data when switching to dashboard
+    if (tabName === 'dashboard') {
+        updateDashboard();
+    } else if (tabName === 'installers') {
+        loadInstallers();
+    }
+}
+
+// Load all installers from the API
+async function loadInstallers() {
+    try {
+        const response = await fetch('/api/installers');
+        const data = await response.json();
+        
+        if (data.success) {
+            installers = data.installers;
+            updateInstallersTable();
+            updateDashboardInstallersTable();
+        } else {
+            console.error('Failed to load installers:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading installers:', error);
+    }
+}
+
+// Load revenue scenarios from the API
+async function loadRevenueScenarios() {
+    try {
+        const response = await fetch('/api/revenue/scenarios');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update global revenue ranges if needed
+            console.log('Revenue scenarios loaded:', data.data);
+        }
+    } catch (error) {
+        console.error('Error loading revenue scenarios:', error);
+    }
+}
+
+// Update the main dashboard
+async function updateDashboard() {
+    const scenario = document.getElementById('revenueScenario').value;
+    const customRevenue = document.getElementById('customRevenue').value;
+    
+    let targetRevenue = revenueTargets[scenario];
+    if (customRevenue && customRevenue > 0) {
+        targetRevenue = parseInt(customRevenue);
+    }
+    
+    try {
+        const response = await fetch(`/api/revenue/dashboard?scenario=${scenario}&target_revenue=${targetRevenue}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update metric cards
+            document.getElementById('totalRevenue').textContent = formatCurrency(data.target_revenue);
+            document.getElementById('committedRevenue').textContent = formatCurrency(data.committed_revenue);
+            document.getElementById('remainingRevenue').textContent = formatCurrency(data.remaining_revenue);
+            
+            // Update chart
+            updateRevenueChart(data);
+            
+            // Update dashboard installers table
+            updateDashboardInstallersTable(data.installer_breakdown);
+        }
+    } catch (error) {
+        console.error('Error updating dashboard:', error);
+    }
+}
+
+// Update the revenue chart
+function updateRevenueChart(data) {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    
+    if (revenueChart) {
+        revenueChart.destroy();
+    }
+    
+    revenueChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Committed Revenue', 'Remaining Revenue'],
+            datasets: [{
+                data: [data.committed_revenue, data.remaining_revenue],
+                backgroundColor: ['#3498db', '#e9ecef'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Revenue Commitment - ${data.percentage_committed.toFixed(1)}% Complete`,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Update installers table in the management tab
+function updateInstallersTable() {
+    const tableBody = document.getElementById('installersTable');
+    
+    if (installers.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6c757d;">No installers added yet</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = installers.map(installer => `
+        <tr>
+            <td>${installer.name}</td>
+            <td><span class="experience-badge experience-${installer.experience_level.toLowerCase()}">${installer.experience_level}</span></td>
+            <td>${Array.isArray(installer.committed_days) ? installer.committed_days.length : installer.committed_days}</td>
+            <td>${new Date(installer.date_added).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-danger" onclick="removeInstaller(${installer.id})" style="padding: 5px 10px; font-size: 0.8em;">Remove</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Update dashboard installers table
+function updateDashboardInstallersTable(installerBreakdown = null) {
+    const tableBody = document.getElementById('dashboardInstallersTable');
+    
+    if (!installerBreakdown && installers.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6c757d;">No installers added yet</td></tr>';
+        return;
+    }
+    
+    // If we have breakdown data from the API, use it; otherwise calculate locally
+    const displayData = installerBreakdown || installers.map(installer => ({
+        installer: installer,
+        capacity: calculateInstallerCapacity(installer)
+    }));
+    
+    tableBody.innerHTML = displayData.map(item => `
+        <tr>
+            <td>${item.installer.name}</td>
+            <td><span class="experience-badge experience-${item.installer.experience_level.toLowerCase()}">${item.installer.experience_level}</span></td>
+            <td>${item.capacity ? item.capacity.committed_days : 'N/A'}</td>
+            <td>${item.capacity ? formatCurrency(item.capacity.total_revenue_capacity) : 'N/A'}</td>
+            <td>${item.capacity ? formatCurrency(item.capacity.total_compensation) : 'N/A'}</td>
+        </tr>
+    `).join('');
+}
+
+// Calculate installer capacity (simplified version for client-side)
+function calculateInstallerCapacity(installer) {
+    const revenueRanges = {
+        'Beginner': { worst: 2500, base: 3250, best: 4000 },
+        'Intermediate': { worst: 4000, base: 4750, best: 5500 },
+        'Advanced': { worst: 5500, base: 6250, best: 7000 },
+        'Expert': { worst: 7000, base: 7750, best: 8500 }
+    };
+    
+    const perDiemRates = {
+        'Beginner': 200,
+        'Intermediate': 225,
+        'Advanced': 275,
+        'Expert': 300
+    };
+    
+    const committedDays = Array.isArray(installer.committed_days) ? installer.committed_days.length : parseInt(installer.committed_days) || 0;
+    const dailyRevenue = revenueRanges[installer.experience_level][currentScenario];
+    const totalRevenueCapacity = dailyRevenue * committedDays;
+    const guaranteedPay = perDiemRates[installer.experience_level] * committedDays;
+    const productionBonus = totalRevenueCapacity * 0.10;
+    const totalCompensation = guaranteedPay + productionBonus;
+    
+    return {
+        committed_days: committedDays,
+        total_revenue_capacity: totalRevenueCapacity,
+        total_compensation: totalCompensation
+    };
+}
+
+// Add new installer
+async function addInstaller() {
+    const name = document.getElementById('installerName').value.trim();
+    const experience = document.getElementById('installerExperience').value;
+    const daysInput = document.getElementById('installerDays').value.trim();
+    
+    if (!name) {
+        alert('Please enter installer name');
+        return;
+    }
+    
+    // Parse committed days
+    let committedDays = [];
+    if (daysInput) {
+        if (daysInput.includes(',')) {
+            // Comma-separated dates
+            committedDays = daysInput.split(',').map(d => d.trim());
+        } else if (!isNaN(daysInput)) {
+            // Number of days
+            const numDays = parseInt(daysInput);
+            committedDays = Array.from({length: numDays}, (_, i) => `Day ${i + 1}`);
+        }
+    }
+    
+    try {
+        const response = await fetch('/api/installers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                experience_level: experience,
+                committed_days: committedDays
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Clear form
+            document.getElementById('installerName').value = '';
+            document.getElementById('installerDays').value = '';
+            
+            // Reload data
+            await loadInstallers();
+            await updateDashboard();
+            
+            alert(`Installer ${name} added successfully!`);
+        } else {
+            alert('Error adding installer: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error adding installer:', error);
+        alert('Error adding installer. Please try again.');
+    }
+}
+
+// Remove installer
+async function removeInstaller(installerId) {
+    if (!confirm('Are you sure you want to remove this installer?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/installers/${installerId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            await loadInstallers();
+            await updateDashboard();
+            alert('Installer removed successfully!');
+        } else {
+            alert('Error removing installer: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error removing installer:', error);
+        alert('Error removing installer. Please try again.');
+    }
+}
+
+// Update recruitment presentation
+async function updateRecruitmentPresentation() {
+    const experience = document.getElementById('recruitExperience').value;
+    const days = parseInt(document.getElementById('recruitDays').value);
+    
+    if (!days || days <= 0) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/recruitment/presentation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                experience_level: experience,
+                committed_days: days
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const presentation = data.presentation_data;
+            
+            // Show scenario comparison
+            document.getElementById('scenarioComparison').style.display = 'grid';
+            
+            // Update worst case
+            document.getElementById('worstAmount').textContent = formatCurrency(presentation.scenarios.worst.total_compensation);
+            document.getElementById('worstDetails').innerHTML = `
+                ${formatCurrency(presentation.scenarios.worst.guaranteed_pay)} guaranteed<br>
+                ${formatCurrency(presentation.scenarios.worst.production_bonus)} production bonus<br>
+                $${presentation.scenarios.worst.effective_hourly_rate.toFixed(2)}/hour effective
+            `;
+            
+            // Update base case
+            document.getElementById('baseAmount').textContent = formatCurrency(presentation.scenarios.base.total_compensation);
+            document.getElementById('baseDetails').innerHTML = `
+                ${formatCurrency(presentation.scenarios.base.guaranteed_pay)} guaranteed<br>
+                ${formatCurrency(presentation.scenarios.base.production_bonus)} production bonus<br>
+                $${presentation.scenarios.base.effective_hourly_rate.toFixed(2)}/hour effective
+            `;
+            
+            // Update best case
+            document.getElementById('bestAmount').textContent = formatCurrency(presentation.scenarios.best.total_compensation);
+            document.getElementById('bestDetails').innerHTML = `
+                ${formatCurrency(presentation.scenarios.best.guaranteed_pay)} guaranteed<br>
+                ${formatCurrency(presentation.scenarios.best.production_bonus)} production bonus<br>
+                $${presentation.scenarios.best.effective_hourly_rate.toFixed(2)}/hour effective
+            `;
+        }
+    } catch (error) {
+        console.error('Error updating recruitment presentation:', error);
+    }
+}
+
+// Initialize settings
+function initializeSettings() {
+    const experienceLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+    const scenarios = ['worst', 'base', 'best'];
+    
+    const settingsContainer = document.getElementById('revenueRangesSettings');
+    
+    settingsContainer.innerHTML = experienceLevels.map(level => `
+        <div class="form-section">
+            <h4>${level}</h4>
+            <div class="form-grid">
+                ${scenarios.map(scenario => `
+                    <div class="form-group">
+                        <label for="${level.toLowerCase()}_${scenario}">${scenario.charAt(0).toUpperCase() + scenario.slice(1)} Case Daily Revenue</label>
+                        <input type="number" id="${level.toLowerCase()}_${scenario}" placeholder="Enter amount">
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Save settings (placeholder)
+function saveSettings() {
+    alert('Settings saved! (This would save to the backend in a full implementation)');
+}
+
+// Save season settings (placeholder)
+function saveSeasonSettings() {
+    alert('Season settings saved! (This would save to the backend in a full implementation)');
+}
+
+// Utility function to format currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+

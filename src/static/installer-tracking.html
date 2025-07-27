@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installer Tracking - Holiday Light 4U</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #2c3e50;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .metric-card p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .form-group input, .form-group select {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .installers-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .installers-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .installers-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .installers-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .installers-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .experience-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .experience-beginner { background: #ffeaa7; color: #d63031; }
+        .experience-intermediate { background: #81ecec; color: #00b894; }
+        .experience-advanced { background: #a29bfe; color: #6c5ce7; }
+        .experience-expert { background: #fd79a8; color: #e84393; }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .recruitment-presentation {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .scenario-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .scenario-card {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .scenario-worst { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; }
+        .scenario-base { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; }
+        .scenario-best { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; }
+
+        .scenario-card h4 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .scenario-card .amount {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .scenario-card .details {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid, .form-grid, .scenario-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Holiday Light 4U</h1>
+            <p>Installer Tracking & Recruitment System</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">Revenue Dashboard</button>
+            <button class="nav-tab" onclick="showTab('recruitment')">Recruitment Tool</button>
+            <button class="nav-tab" onclick="showTab('installers')">Installer Management</button>
+            <button class="nav-tab" onclick="showTab('settings')">Settings</button>
+            <button class="nav-tab" onclick="window.location.href='/calendar-view.html'">📅 Calendar</button>
+        </div>
+
+        <!-- Revenue Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <h3 id="totalRevenue">$1,500,000</h3>
+                    <p>Target Revenue</p>
+                </div>
+                <div class="metric-card">
+                    <h3 id="committedRevenue">$0</h3>
+                    <p>Committed Revenue</p>
+                </div>
+                <div class="metric-card">
+                    <h3 id="remainingRevenue">$1,500,000</h3>
+                    <p>Remaining Revenue</p>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Revenue Scenario Selection</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="revenueScenario">Scenario</label>
+                        <select id="revenueScenario" onchange="updateDashboard()">
+                            <option value="worst">Worst Case ($1,200,000)</option>
+                            <option value="base" selected>Base Case ($1,500,000)</option>
+                            <option value="best">Best Case ($1,800,000)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="customRevenue">Custom Target Revenue</label>
+                        <input type="number" id="customRevenue" placeholder="Enter custom amount">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="updateDashboard()">Update Dashboard</button>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="installers-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Installer Name</th>
+                            <th>Experience Level</th>
+                            <th>Committed Days</th>
+                            <th>Revenue Capacity</th>
+                            <th>Total Compensation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardInstallersTable">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #6c757d;">No installers added yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recruitment Tool Tab -->
+        <div id="recruitment" class="tab-content">
+            <div class="form-section">
+                <h3>Recruitment Presentation Generator</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="recruitExperience">Experience Level</label>
+                        <select id="recruitExperience" onchange="updateRecruitmentPresentation()">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="Expert">Expert</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recruitDays">Committed Days</label>
+                        <input type="number" id="recruitDays" value="60" min="1" max="120" onchange="updateRecruitmentPresentation()">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="updateRecruitmentPresentation()">Generate Presentation</button>
+            </div>
+
+            <div class="recruitment-presentation" id="recruitmentPresentation">
+                <h3>Compensation Overview</h3>
+                <p>Select experience level and committed days to see earning potential.</p>
+                
+                <div class="scenario-comparison" id="scenarioComparison" style="display: none;">
+                    <div class="scenario-card scenario-worst">
+                        <h4>Worst Case (Guaranteed)</h4>
+                        <div class="amount" id="worstAmount">$0</div>
+                        <div class="details" id="worstDetails"></div>
+                    </div>
+                    <div class="scenario-card scenario-base">
+                        <h4>Base Case (Expected)</h4>
+                        <div class="amount" id="baseAmount">$0</div>
+                        <div class="details" id="baseDetails"></div>
+                    </div>
+                    <div class="scenario-card scenario-best">
+                        <h4>Best Case (High Performance)</h4>
+                        <div class="amount" id="bestAmount">$0</div>
+                        <div class="details" id="bestDetails"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Installer Management Tab -->
+        <div id="installers" class="tab-content">
+            <div class="form-section">
+                <h3>Add New Installer</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="installerName">Installer Name</label>
+                        <input type="text" id="installerName" placeholder="Enter installer name">
+                    </div>
+                    <div class="form-group">
+                        <label for="installerExperience">Experience Level</label>
+                        <select id="installerExperience">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="Expert">Expert</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="installerDays">Committed Days (comma-separated or number)</label>
+                    <input type="text" id="installerDays" placeholder="60 or 2024-10-01,2024-10-02,...">
+                </div>
+                <button class="btn btn-success" onclick="addInstaller()">Add Installer</button>
+            </div>
+
+            <div class="installers-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Experience</th>
+                            <th>Committed Days</th>
+                            <th>Date Added</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="installersTable">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #6c757d;">Loading installers...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div class="form-section">
+                <h3>Revenue Ranges by Experience Level</h3>
+                <div id="revenueRangesSettings">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+
+            <div class="form-section">
+                <h3>Season Configuration</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="inSeasonStart">In-Season Start Date</label>
+                        <input type="date" id="inSeasonStart" value="2024-10-01">
+                    </div>
+                    <div class="form-group">
+                        <label for="inSeasonEnd">In-Season End Date</label>
+                        <input type="date" id="inSeasonEnd" value="2024-12-31">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSeasonSettings()">Save Season Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="installer-tracking.js"></script>
+</body>
+</html>
+
