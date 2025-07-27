@@ -380,6 +380,21 @@
             box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
         }
 
+        /* Recruitment Summary Styles */
+        .recruitment-presentation h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .scenario-card .details {
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .scenario-comparison {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
         @media (max-width: 768px) {
             .dashboard-grid, .form-grid, .scenario-comparison {
                 grid-template-columns: 1fr;
@@ -413,8 +428,6 @@
             <button class="nav-tab" onclick="showTab('settings')">Experience Level Settings</button>
             <button class="nav-tab" onclick="showTab('season')">Season Schedule & Calendar</button>
             <button class="nav-tab" onclick="showTab('recruitment')">Recruitment Summary</button>
-            <button class="nav-tab" onclick="showTab('installers')">Installer Management</button>
-            <button class="nav-tab" onclick="window.location.href='/calendar-view.html'">📅 Calendar</button>
         </div>
 
         <!-- Revenue Dashboard Tab -->
@@ -487,7 +500,8 @@
         <!-- Recruitment Tool Tab -->
         <div id="recruitment" class="tab-content">
             <div class="form-section">
-                <h3>Recruitment Summary</h3>
+                <h3>Recruitment Calculator</h3>
+                <p style="color: #6c757d; margin-bottom: 20px;">Calculate potential earnings for new installers based on their experience level and availability.</p>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="recruitExperience">Experience Level</label>
@@ -499,11 +513,11 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="recruitDays">Committed Days</label>
+                        <label for="recruitDays">Total Committed Days</label>
                         <input type="number" id="recruitDays" value="60" min="1" max="120" onchange="updateRecruitmentPresentation()">
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="updateRecruitmentPresentation()">Generate Presentation</button>
+                <button class="btn btn-primary" onclick="updateRecruitmentPresentation()">Calculate Compensation</button>
             </div>
 
             <div class="recruitment-presentation" id="recruitmentPresentation">
@@ -527,52 +541,6 @@
                         <div class="details" id="bestDetails"></div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Installer Management Tab -->
-        <div id="installers" class="tab-content">
-            <div class="form-section">
-                <h3>Add New Installer</h3>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="installerName">Installer Name</label>
-                        <input type="text" id="installerName" placeholder="Enter installer name">
-                    </div>
-                    <div class="form-group">
-                        <label for="installerExperience">Experience Level</label>
-                        <select id="installerExperience">
-                            <option value="Beginner">Beginner</option>
-                            <option value="Intermediate">Intermediate</option>
-                            <option value="Advanced">Advanced</option>
-                            <option value="Expert">Expert</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="installerDays">Committed Days (comma-separated or number)</label>
-                    <input type="text" id="installerDays" placeholder="60 or 2024-10-01,2024-10-02,...">
-                </div>
-                <button class="btn btn-success" onclick="addInstaller()">Add Installer</button>
-            </div>
-
-            <div class="installers-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Experience</th>
-                            <th>Committed Days</th>
-                            <th>Date Added</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="installersTable">
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: #6c757d;">Loading installers...</td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
 

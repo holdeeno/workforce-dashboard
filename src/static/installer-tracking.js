@@ -83,8 +83,6 @@ function showTab(tabName) {
     // Refresh data when switching to dashboard
     if (tabName === 'dashboard') {
         updateDashboard();
-    } else if (tabName === 'installers') {
-        loadInstallers();
     }
 }
 
@@ -1166,14 +1164,105 @@ const enhancedShowTab = function(tabName) {
     // Refresh data when switching to dashboard
     if (tabName === 'dashboard') {
         updateDashboard();
-    } else if (tabName === 'installers') {
-        loadInstallers();
     } else if (tabName === 'season') {
         // Initialize calendar when season tab is shown
         setTimeout(() => {
             initializeCalendar();
         }, 100);
     }
+}
+
+// Calculate phase breakdown for committed days
+function calculatePhaseBreakdown(committedDays) {
+    let preSeasonDays = 0;
+    let inSeasonDays = 0;
+    let postSeasonDays = 0;
+    let offSeasonDays = 0;
+    
+    committedDays.forEach(dateString => {
+        const date = new Date(dateString);
+        const season = getSeasonForDate(date);
+        
+        switch(season) {
+            case 'pre-season':
+                preSeasonDays++;
+                break;
+            case 'in-season':
+                inSeasonDays++;
+                break;
+            case 'post-season':
+                postSeasonDays++;
+                break;
+            case 'off-season':
+                offSeasonDays++;
+                break;
+        }
+    });
+    
+    return {
+        preSeasonDays,
+        inSeasonDays,
+        postSeasonDays,
+        offSeasonDays,
+        totalDays: committedDays.length
+    };
+}
+
+// Calculate detailed compensation with phase breakdown
+function calculateDetailedCompensation(experienceLevel, phaseBreakdown, scenario = 'base') {
+    const revenueRanges = {
+        'Beginner': { worst: 2500, base: 3250, best: 4000 },
+        'Intermediate': { worst: 4000, base: 4750, best: 5500 },
+        'Advanced': { worst: 5500, base: 6250, best: 7000 },
+        'Expert': { worst: 7000, base: 7750, best: 8500 }
+    };
+    
+    const perDiemRates = {
+        'Beginner': 200,
+        'Intermediate': 225,
+        'Advanced': 250,
+        'Expert': 275
+    };
+    
+    const perDiemRate = perDiemRates[experienceLevel];
+    const dailyRevenue = revenueRanges[experienceLevel][scenario];
+    
+    // Calculate base pay (guaranteed per-diem for ALL days)
+    const totalBasePay = phaseBreakdown.totalDays * perDiemRate;
+    
+    // Calculate revenue generated (only for in-season days)
+    const inSeasonRevenue = phaseBreakdown.inSeasonDays * dailyRevenue;
+    
+    // Calculate production bonus
+    // Formula: (Total Revenue × 10%) - (In-Season + Post-Season days × per-diem rate)
+    const productionDaysCount = phaseBreakdown.inSeasonDays + phaseBreakdown.postSeasonDays;
+    const productionDaysPerDiem = productionDaysCount * perDiemRate;
+    const grossProductionBonus = inSeasonRevenue * 0.10;
+    const netProductionBonus = Math.max(0, grossProductionBonus - productionDaysPerDiem);
+    
+    // Total compensation is base pay + production bonus
+    const totalCompensation = totalBasePay + netProductionBonus;
+    
+    // Calculate effective hourly rate (assuming 12 hours per day)
+    const totalHours = phaseBreakdown.totalDays * 12;
+    const effectiveHourlyRate = totalHours > 0 ? totalCompensation / totalHours : 0;
+    
+    return {
+        perDiemRate,
+        dailyRevenue,
+        totalDays: phaseBreakdown.totalDays,
+        inSeasonDays: phaseBreakdown.inSeasonDays,
+        postSeasonDays: phaseBreakdown.postSeasonDays,
+        totalBasePay,
+        inSeasonRevenue,
+        productionDaysCount,
+        productionDaysPerDiem,
+        grossProductionBonus,
+        netProductionBonus,
+        totalCompensation,
+        effectiveHourlyRate,
+        breakdown: phaseBreakdown
+    };
 }
 
 // Commit installer from calendar selection
@@ -1220,6 +1309,15 @@ async function commitInstallerFromCalendar() {
             await loadInstallers();
             await updateDashboard();
             
+            // Calculate phase breakdown and show recruitment summary
+            const phaseBreakdown = calculatePhaseBreakdown(committedDays);
+            showRecruitmentSummary({
+                name: name,
+                experienceLevel: experience,
+                committedDays: committedDays,
+                phaseBreakdown: phaseBreakdown
+            });
+            
             // Switch to recruitment summary tab to see the new addition
             showTab('recruitment');
         } else {
@@ -1231,9 +1329,113 @@ async function commitInstallerFromCalendar() {
     }
 }
 
+// Show recruitment summary for newly committed installer
+function showRecruitmentSummary(installerData) {
+    // Store the data for display
+    window.currentRecruitmentSummary = installerData;
+    
+    // Clear existing content
+    const recruitmentPresentation = document.getElementById('recruitmentPresentation');
+    if (!recruitmentPresentation) return;
+    
+    // Calculate compensation for all scenarios
+    const scenarios = ['worst', 'base', 'best'];
+    const compensationData = {};
+    
+    scenarios.forEach(scenario => {
+        compensationData[scenario] = calculateDetailedCompensation(
+            installerData.experienceLevel,
+            installerData.phaseBreakdown,
+            scenario
+        );
+    });
+    
+    // Build the summary HTML
+    let summaryHTML = `
+        <h3>Recruitment Summary for ${installerData.name}</h3>
+        <div style="margin-bottom: 20px;">
+            <p style="font-size: 1.1em; color: #2c3e50;">
+                <strong>Experience Level:</strong> <span class="experience-badge experience-${installerData.experienceLevel.toLowerCase()}">${installerData.experienceLevel}</span><br>
+                <strong>Total Committed Days:</strong> ${installerData.phaseBreakdown.totalDays} days<br>
+                <strong>Per-Diem Rate:</strong> ${formatCurrency(compensationData.base.perDiemRate)}/day
+            </p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h4 style="color: #2c3e50; margin-bottom: 15px;">Work Days Breakdown</h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 600; color: #ffeaa7;">${installerData.phaseBreakdown.preSeasonDays}</div>
+                    <div style="color: #6c757d; font-size: 14px;">Pre-Season Days</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 600; color: #fd79a8;">${installerData.phaseBreakdown.inSeasonDays}</div>
+                    <div style="color: #6c757d; font-size: 14px;">In-Season Days</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 600; color: #81ecec;">${installerData.phaseBreakdown.postSeasonDays}</div>
+                    <div style="color: #6c757d; font-size: 14px;">Post-Season Days</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; font-weight: 600; color: #888;">${installerData.phaseBreakdown.offSeasonDays}</div>
+                    <div style="color: #6c757d; font-size: 14px;">Off-Season Days</div>
+                </div>
+            </div>
+        </div>
+        
+        <h4 style="color: #2c3e50; margin-bottom: 15px;">Compensation Scenarios</h4>
+        <div class="scenario-comparison" style="display: grid;">
+    `;
+    
+    // Add scenario cards
+    const scenarioInfo = {
+        worst: { title: 'Worst Case (Guaranteed)', class: 'scenario-worst' },
+        base: { title: 'Base Case (Expected)', class: 'scenario-base' },
+        best: { title: 'Best Case (High Performance)', class: 'scenario-best' }
+    };
+    
+    scenarios.forEach(scenario => {
+        const comp = compensationData[scenario];
+        const info = scenarioInfo[scenario];
+        
+        summaryHTML += `
+            <div class="scenario-card ${info.class}">
+                <h4>${info.title}</h4>
+                <div class="amount">${formatCurrency(comp.totalCompensation)}</div>
+                <div class="details">
+                    <div style="margin-bottom: 10px;">
+                        <strong>Base Pay (All Days):</strong><br>
+                        ${comp.totalDays} days × ${formatCurrency(comp.perDiemRate)} = ${formatCurrency(comp.totalBasePay)}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Production Bonus:</strong><br>
+                        Revenue: ${formatCurrency(comp.inSeasonRevenue)} (${comp.inSeasonDays} days × ${formatCurrency(comp.dailyRevenue)})<br>
+                        10% Bonus: ${formatCurrency(comp.grossProductionBonus)}<br>
+                        Less Per-Diem: -${formatCurrency(comp.productionDaysPerDiem)}<br>
+                        Net Bonus: ${formatCurrency(comp.netProductionBonus)}
+                    </div>
+                    <div>
+                        <strong>Effective Rate:</strong> $${comp.effectiveHourlyRate.toFixed(2)}/hour
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    summaryHTML += '</div>';
+    
+    // Update the recruitment presentation div
+    recruitmentPresentation.innerHTML = summaryHTML;
+    
+    // Hide the form section since we're showing a summary
+    const formSection = document.querySelector('#recruitment .form-section');
+    if (formSection) {
+        formSection.style.display = 'none';
+    }
+}
+
 // Export functions for HTML
 window.showTab = enhancedShowTab;
-window.addInstaller = addInstaller;
 window.removeInstaller = removeInstaller;
 window.saveSettings = saveSettings;
 window.saveRevenueGoals = saveRevenueGoals;
