@@ -96,6 +96,16 @@ The dashboard will be available at `http://localhost:5000`
 4. **Present Results**: Show interactive compensation breakdown
 5. **Print Report**: Generate professional summary for candidates
 
+### Recruitment Summary
+
+- **Overview**: Provides a summary of recruitment efforts, showing performance metrics and analysis for informed decision-making.
+- **Usage**: Navigate to `/recruitment-summary.html`. This feature aggregates data from interviews to provide a comprehensive view of recruitment strategies and results.
+
+### Delete Features
+
+- **Mark as Inactive**: Temporarily removes the installer from active lists without deleting their records permanently.
+- **Permanent Delete**: Completely removes the installer's record from the system, useful for long-term data management.
+
 ### For Financial Planning
 
 1. **Configure Parameters**: Set per-diem rates and bonus thresholds
@@ -138,6 +148,13 @@ The dashboard will be available at `http://localhost:5000`
 - `POST /api/analytics/sensitivity-analysis` - Perform sensitivity analysis
 - `GET /api/analytics/break-even-chart` - Generate break-even charts
 - `POST /api/analytics/export-analysis` - Export comprehensive data
+
+### Installer Management
+- `GET /api/installers` - Get list of all installers
+- `POST /api/add_installer` - Add a new installer to the system
+- `DELETE /api/remove_installer/{installer_id}` - Mark an installer as inactive (soft delete)
+- `DELETE /api/delete_installer/{installer_id}` - Permanently delete an installer from the system
+- `GET /api/recruitment_summary` - Get recruitment summary with phase breakdown and compensation analysis
 
 ## Configuration Options
 
