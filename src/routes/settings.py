@@ -66,3 +66,49 @@ def save_revenue_ranges():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@settings_bp.route('/settings/season-dates', methods=['GET'])
+def get_season_dates():
+    """Get saved season dates"""
+    settings = load_settings()
+    season_dates = settings.get('season_dates', {})
+    
+    return jsonify({
+        'success': True,
+        'data': season_dates
+    })
+
+@settings_bp.route('/settings/season-dates', methods=['POST'])
+def save_season_dates():
+    """Save season dates"""
+    try:
+        data = request.get_json()
+        
+        # Validate the data structure
+        if not isinstance(data, dict):
+            return jsonify({'success': False, 'error': 'Invalid data format'}), 400
+        
+        # Validate that all required seasons are present
+        required_seasons = ['pre_season', 'in_season', 'post_season', 'off_season']
+        for season in required_seasons:
+            if season not in data:
+                return jsonify({'success': False, 'error': f'Missing season: {season}'}), 400
+            if 'start_date' not in data[season] or 'end_date' not in data[season]:
+                return jsonify({'success': False, 'error': f'Missing dates for {season}'}), 400
+        
+        # Load existing settings
+        settings = load_settings()
+        
+        # Update season dates
+        settings['season_dates'] = data
+        
+        # Save settings
+        save_settings(settings)
+        
+        return jsonify({
+            'success': True,
+            'data': data,
+            'message': 'Season dates saved successfully'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

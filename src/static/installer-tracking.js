@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRevenueGoals();
     updateDashboard();
     initializeSettings();
+    loadSeasonDates();
     
     // Add event listeners for revenue input formatting
     const revenueInputs = ['worstCaseRevenue', 'baseCaseRevenue', 'bestCaseRevenue'];
@@ -713,4 +714,169 @@ function showSeasonContent(season) {
         selectedContent.style.display = 'block';
     }
 }
+
+// Load season dates from the API
+async function loadSeasonDates() {
+    try {
+        const response = await fetch('/api/settings/season-dates');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            // Set the date values for each season
+            const seasons = ['pre_season', 'in_season', 'post_season', 'off_season'];
+            seasons.forEach(season => {
+                const seasonKey = season.replace('_', '-');
+                if (data.data[season]) {
+                    const startInput = document.getElementById(`${seasonKey}-start`);
+                    const endInput = document.getElementById(`${seasonKey}-end`);
+                    
+                    if (startInput && data.data[season].start_date) {
+                        startInput.value = data.data[season].start_date;
+                    }
+                    if (endInput && data.data[season].end_date) {
+                        endInput.value = data.data[season].end_date;
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading season dates:', error);
+        // Set default dates if loading fails
+        setDefaultSeasonDates();
+    }
+}
+
+// Set default season dates
+function setDefaultSeasonDates() {
+    const currentYear = new Date().getFullYear();
+    const defaults = {
+        'pre-season': {
+            start: `${currentYear}-08-01`,
+            end: `${currentYear}-09-30`
+        },
+        'in-season': {
+            start: `${currentYear}-10-01`,
+            end: `${currentYear}-12-31`
+        },
+        'post-season': {
+            start: `${currentYear + 1}-01-01`,
+            end: `${currentYear + 1}-01-31`
+        },
+        'off-season': {
+            start: `${currentYear + 1}-02-01`,
+            end: `${currentYear + 1}-02-28`
+        }
+    };
+    
+    Object.keys(defaults).forEach(season => {
+        const startInput = document.getElementById(`${season}-start`);
+        const endInput = document.getElementById(`${season}-end`);
+        
+        if (startInput) startInput.value = defaults[season].start;
+        if (endInput) endInput.value = defaults[season].end;
+    });
+}
+
+// Save season dates to the API
+async function saveSeasonDates() {
+    const seasonDates = {
+        pre_season: {
+            start_date: document.getElementById('pre-season-start').value,
+            end_date: document.getElementById('pre-season-end').value
+        },
+        in_season: {
+            start_date: document.getElementById('in-season-start').value,
+            end_date: document.getElementById('in-season-end').value
+        },
+        post_season: {
+            start_date: document.getElementById('post-season-start').value,
+            end_date: document.getElementById('post-season-end').value
+        },
+        off_season: {
+            start_date: document.getElementById('off-season-start').value,
+            end_date: document.getElementById('off-season-end').value
+        }
+    };
+    
+    // Validate dates
+    const validation = validateSeasonDates(seasonDates);
+    if (!validation.valid) {
+        alert(validation.message);
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/settings/season-dates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(seasonDates)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Season dates saved successfully!');
+        } else {
+            alert('Error saving season dates: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving season dates:', error);
+        alert('Error saving season dates. Please try again.');
+    }
+}
+
+// Validate season dates
+function validateSeasonDates(seasonDates) {
+    const seasons = ['pre_season', 'in_season', 'post_season', 'off_season'];
+    
+    // Check if all dates are filled
+    for (const season of seasons) {
+        if (!seasonDates[season].start_date || !seasonDates[season].end_date) {
+            return {
+                valid: false,
+                message: `Please fill in all start and end dates for ${season.replace('_', ' ')}.`
+            };
+        }
+        
+        // Check if end date is after start date
+        const startDate = new Date(seasonDates[season].start_date);
+        const endDate = new Date(seasonDates[season].end_date);
+        
+        if (endDate <= startDate) {
+            return {
+                valid: false,
+                message: `End date must be after start date for ${season.replace('_', ' ')}.`
+            };
+        }
+    }
+    
+    // Check for overlapping seasons
+    for (let i = 0; i < seasons.length - 1; i++) {
+        const currentEnd = new Date(seasonDates[seasons[i]].end_date);
+        const nextStart = new Date(seasonDates[seasons[i + 1]].start_date);
+        
+        if (currentEnd >= nextStart) {
+            return {
+                valid: false,
+                message: `${seasons[i].replace('_', ' ')} overlaps with ${seasons[i + 1].replace('_', ' ')}. Please adjust the dates.`
+            };
+        }
+    }
+    
+    return { valid: true };
+}
+
+// Export functions for HTML
+window.showTab = showTab;
+window.addInstaller = addInstaller;
+window.removeInstaller = removeInstaller;
+window.saveSettings = saveSettings;
+window.saveRevenueGoals = saveRevenueGoals;
+window.updateRecruitmentPresentation = updateRecruitmentPresentation;
+window.saveSeasonSettings = saveSeasonSettings;
+window.updateDashboard = updateDashboard;
+window.showSeasonContent = showSeasonContent;
+window.saveSeasonDates = saveSeasonDates;
 
