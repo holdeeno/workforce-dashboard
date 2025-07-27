@@ -435,6 +435,42 @@ async function removeInstaller(installerId) {
     }
 }
 
+// Show recruitment form for new installer calculation
+function showRecruitmentForm() {
+    // Show the form section
+    const formSection = document.querySelector('#recruitment .form-section');
+    if (formSection) {
+        formSection.style.display = 'block';
+    }
+    
+    // Clear the recruitment presentation to show the form's default state
+    const recruitmentPresentation = document.getElementById('recruitmentPresentation');
+    if (recruitmentPresentation) {
+        recruitmentPresentation.innerHTML = `
+            <h3>Compensation Overview</h3>
+            <p>Select experience level and committed days to see earning potential.</p>
+            
+            <div class="scenario-comparison" id="scenarioComparison" style="display: none;">
+                <div class="scenario-card scenario-worst">
+                    <h4>Worst Case (Guaranteed)</h4>
+                    <div class="amount" id="worstAmount">$0</div>
+                    <div class="details" id="worstDetails"></div>
+                </div>
+                <div class="scenario-card scenario-base">
+                    <h4>Base Case (Expected)</h4>
+                    <div class="amount" id="baseAmount">$0</div>
+                    <div class="details" id="baseDetails"></div>
+                </div>
+                <div class="scenario-card scenario-best">
+                    <h4>Best Case (High Performance)</h4>
+                    <div class="amount" id="bestAmount">$0</div>
+                    <div class="details" id="bestDetails"></div>
+                </div>
+            </div>
+        `;
+    }
+}
+
 // Update recruitment presentation
 async function updateRecruitmentPresentation() {
     const experience = document.getElementById('recruitExperience').value;
@@ -1169,6 +1205,9 @@ const enhancedShowTab = function(tabName) {
         setTimeout(() => {
             initializeCalendar();
         }, 100);
+    } else if (tabName === 'recruitment') {
+        // Show all installers list when switching to recruitment tab
+        showAllInstallersRecruitmentSummary();
     }
 }
 
@@ -1329,6 +1368,179 @@ async function commitInstallerFromCalendar() {
     }
 }
 
+// Show all installers recruitment summary list
+async function showAllInstallersRecruitmentSummary() {
+    const recruitmentPresentation = document.getElementById('recruitmentPresentation');
+    if (!recruitmentPresentation) return;
+    
+    // Build the summary HTML
+    let summaryHTML = `
+        <h3>All Installers Recruitment Summary</h3>
+        <div style="margin-bottom: 20px;">
+            <button class="btn btn-primary" onclick="showRecruitmentForm()">Calculate New Installer</button>
+        </div>
+    `;
+    
+    if (installers.length === 0) {
+        summaryHTML += '<p style="color: #6c757d;">No installers committed yet. Use the calendar to commit installers with specific work days.</p>';
+    } else {
+        // Create table for all installers
+        summaryHTML += `
+            <div class="installers-table" style="margin-bottom: 30px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Installer Name</th>
+                            <th>Experience</th>
+                            <th>Total Days</th>
+                            <th>Pre-Season</th>
+                            <th>In-Season</th>
+                            <th>Post-Season</th>
+                            <th>Off-Season</th>
+                            <th>Base Compensation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        let totalsByPhase = {
+            total: 0,
+            preSeason: 0,
+            inSeason: 0,
+            postSeason: 0,
+            offSeason: 0,
+            compensation: 0
+        };
+        
+        for (const installer of installers) {
+            // Calculate phase breakdown if we have committed days
+            let phaseBreakdown = { totalDays: 0, preSeasonDays: 0, inSeasonDays: 0, postSeasonDays: 0, offSeasonDays: 0 };
+            
+            if (Array.isArray(installer.committed_days) && installer.committed_days.length > 0) {
+                // Check if committed_days contains date strings
+                if (installer.committed_days[0] && installer.committed_days[0].includes('-')) {
+                    phaseBreakdown = calculatePhaseBreakdown(installer.committed_days);
+                } else {
+                    phaseBreakdown.totalDays = installer.committed_days.length;
+                }
+            } else if (typeof installer.committed_days === 'number') {
+                phaseBreakdown.totalDays = installer.committed_days;
+            }
+            
+            // Calculate base compensation
+            const compensation = calculateDetailedCompensation(
+                installer.experience_level,
+                phaseBreakdown,
+                'base'
+            );
+            
+            // Add to totals
+            totalsByPhase.total += phaseBreakdown.totalDays;
+            totalsByPhase.preSeason += phaseBreakdown.preSeasonDays;
+            totalsByPhase.inSeason += phaseBreakdown.inSeasonDays;
+            totalsByPhase.postSeason += phaseBreakdown.postSeasonDays;
+            totalsByPhase.offSeason += phaseBreakdown.offSeasonDays;
+            totalsByPhase.compensation += compensation.totalCompensation;
+            
+            summaryHTML += `
+                <tr>
+                    <td>${installer.name}</td>
+                    <td><span class="experience-badge experience-${installer.experience_level.toLowerCase()}">${installer.experience_level}</span></td>
+                    <td style="text-align: center;"><strong>${phaseBreakdown.totalDays}</strong></td>
+                    <td style="text-align: center; color: #f39c12;">${phaseBreakdown.preSeasonDays}</td>
+                    <td style="text-align: center; color: #e91e63;">${phaseBreakdown.inSeasonDays}</td>
+                    <td style="text-align: center; color: #00bcd4;">${phaseBreakdown.postSeasonDays}</td>
+                    <td style="text-align: center; color: #888;">${phaseBreakdown.offSeasonDays}</td>
+                    <td style="text-align: center;"><strong>${formatCurrency(compensation.totalCompensation)}</strong></td>
+                    <td>
+                        <button class="btn btn-primary" onclick="showIndividualRecruitmentSummary(${installer.id})" style="padding: 5px 10px; font-size: 0.8em;">View Details</button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Add totals row
+        summaryHTML += `
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f8f9fa; font-weight: 600;">
+                            <td colspan="2">TOTALS (${installers.length} installers)</td>
+                            <td style="text-align: center;">${totalsByPhase.total}</td>
+                            <td style="text-align: center; color: #f39c12;">${totalsByPhase.preSeason}</td>
+                            <td style="text-align: center; color: #e91e63;">${totalsByPhase.inSeason}</td>
+                            <td style="text-align: center; color: #00bcd4;">${totalsByPhase.postSeason}</td>
+                            <td style="text-align: center; color: #888;">${totalsByPhase.offSeason}</td>
+                            <td style="text-align: center;">${formatCurrency(totalsByPhase.compensation)}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+        
+        // Add phase coverage summary
+        summaryHTML += `
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                <h4 style="color: #2c3e50; margin-bottom: 15px;">Phase Coverage Summary</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 2px solid #ffeaa7;">
+                        <div style="font-size: 28px; font-weight: 600; color: #f39c12;">${totalsByPhase.preSeason}</div>
+                        <div style="color: #6c757d; font-size: 14px;">Pre-Season Days</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 2px solid #fd79a8;">
+                        <div style="font-size: 28px; font-weight: 600; color: #e91e63;">${totalsByPhase.inSeason}</div>
+                        <div style="color: #6c757d; font-size: 14px;">In-Season Days</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 2px solid #81ecec;">
+                        <div style="font-size: 28px; font-weight: 600; color: #00bcd4;">${totalsByPhase.postSeason}</div>
+                        <div style="color: #6c757d; font-size: 14px;">Post-Season Days</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 2px solid #ddd;">
+                        <div style="font-size: 28px; font-weight: 600; color: #888;">${totalsByPhase.offSeason}</div>
+                        <div style="color: #6c757d; font-size: 14px;">Off-Season Days</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    recruitmentPresentation.innerHTML = summaryHTML;
+    
+    // Hide the form section
+    const formSection = document.querySelector('#recruitment .form-section');
+    if (formSection) {
+        formSection.style.display = 'none';
+    }
+}
+
+// Show individual installer recruitment summary
+async function showIndividualRecruitmentSummary(installerId) {
+    const installer = installers.find(i => i.id === installerId);
+    if (!installer) return;
+    
+    // Calculate phase breakdown
+    let phaseBreakdown = { totalDays: 0, preSeasonDays: 0, inSeasonDays: 0, postSeasonDays: 0, offSeasonDays: 0 };
+    
+    if (Array.isArray(installer.committed_days) && installer.committed_days.length > 0) {
+        if (installer.committed_days[0] && installer.committed_days[0].includes('-')) {
+            phaseBreakdown = calculatePhaseBreakdown(installer.committed_days);
+        } else {
+            phaseBreakdown.totalDays = installer.committed_days.length;
+        }
+    } else if (typeof installer.committed_days === 'number') {
+        phaseBreakdown.totalDays = installer.committed_days;
+    }
+    
+    // Show the detailed summary
+    showRecruitmentSummary({
+        name: installer.name,
+        experienceLevel: installer.experience_level,
+        committedDays: installer.committed_days,
+        phaseBreakdown: phaseBreakdown
+    });
+}
+
 // Show recruitment summary for newly committed installer
 function showRecruitmentSummary(installerData) {
     // Store the data for display
@@ -1449,4 +1661,5 @@ window.nextMonth = nextMonth;
 window.clearCalendarSelection = clearCalendarSelection;
 window.selectAllWorkingDays = selectAllWorkingDays;
 window.commitInstallerFromCalendar = commitInstallerFromCalendar;
+window.showRecruitmentForm = showRecruitmentForm;
 
