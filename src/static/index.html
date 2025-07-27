@@ -339,6 +339,7 @@
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showTab('dashboard')">Revenue Dashboard</button>
             <button class="nav-tab" onclick="showTab('settings')">Experience Level Settings</button>
+            <button class="nav-tab" onclick="showTab('season')">Season Schedule & Calendar</button>
             <button class="nav-tab" onclick="showTab('recruitment')">Recruitment Tool</button>
             <button class="nav-tab" onclick="showTab('installers')">Installer Management</button>
             <button class="nav-tab" onclick="window.location.href='/calendar-view.html'">📅 Calendar</button>
@@ -532,6 +533,43 @@
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="saveSeasonSettings()">Save Season Settings</button>
+            </div>
+        </div>
+
+        <!-- Season Schedule & Calendar Tab -->
+        <div id="season" class="tab-content">
+            <div class="form-section">
+                <h3>Season Schedule & Expectations</h3>
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div>
+                        <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">Season Phases</h4>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-weight: 600; margin-bottom: 5px;">Pre-Season (Aug-Sep)</div>
+                                <div style="font-size: 0.9em; color: #6c757d;">Setup, training, equipment prep</div>
+                            </div>
+                            <div style="padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                                <div style="font-weight: 600; margin-bottom: 5px;">In-Season (Oct-Dec)</div>
+                                <div style="font-size: 0.9em; color: #6c757d;">Peak installation period</div>
+                            </div>
+                            <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-weight: 600; margin-bottom: 5px;">Post-Season (Jan-Feb)</div>
+                                <div style="font-size: 0.9em; color: #6c757d;">Removal and storage</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">Work Schedule</h4>
+                        <ul style="list-style: none; padding: 0; line-height: 2;">
+                            <li>• <strong>Hours:</strong> 7:00 AM - 7:00 PM (12 hours/day)</li>
+                            <li>• <strong>Days:</strong> Variable schedule, 4-6 days per week</li>
+                            <li>• <strong>Location:</strong> Phoenix metropolitan area</li>
+                            <li>• <strong>Transportation:</strong> Company vehicles provided</li>
+                            <li>• <strong>Equipment:</strong> All tools and materials provided</li>
+                            <li>• <strong>Uniforms:</strong> Provided and required daily</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
