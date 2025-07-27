@@ -1422,10 +1422,21 @@ async function showAllInstallersRecruitmentSummary() {
                 if (installer.committed_days[0] && installer.committed_days[0].includes('-')) {
                     phaseBreakdown = calculatePhaseBreakdown(installer.committed_days);
                 } else {
+                    // For "Day X" format, distribute days proportionally based on typical season distribution
+                    // Assume: 10% pre-season, 60% in-season, 20% post-season, 10% off-season
                     phaseBreakdown.totalDays = installer.committed_days.length;
+                    phaseBreakdown.preSeasonDays = Math.round(phaseBreakdown.totalDays * 0.10);
+                    phaseBreakdown.inSeasonDays = Math.round(phaseBreakdown.totalDays * 0.60);
+                    phaseBreakdown.postSeasonDays = Math.round(phaseBreakdown.totalDays * 0.20);
+                    phaseBreakdown.offSeasonDays = phaseBreakdown.totalDays - phaseBreakdown.preSeasonDays - phaseBreakdown.inSeasonDays - phaseBreakdown.postSeasonDays;
                 }
             } else if (typeof installer.committed_days === 'number') {
                 phaseBreakdown.totalDays = installer.committed_days;
+                // Same proportional distribution for numeric days
+                phaseBreakdown.preSeasonDays = Math.round(phaseBreakdown.totalDays * 0.10);
+                phaseBreakdown.inSeasonDays = Math.round(phaseBreakdown.totalDays * 0.60);
+                phaseBreakdown.postSeasonDays = Math.round(phaseBreakdown.totalDays * 0.20);
+                phaseBreakdown.offSeasonDays = phaseBreakdown.totalDays - phaseBreakdown.preSeasonDays - phaseBreakdown.inSeasonDays - phaseBreakdown.postSeasonDays;
             }
             
             // Calculate base compensation
@@ -1526,10 +1537,19 @@ async function showIndividualRecruitmentSummary(installerId) {
         if (installer.committed_days[0] && installer.committed_days[0].includes('-')) {
             phaseBreakdown = calculatePhaseBreakdown(installer.committed_days);
         } else {
+            // For "Day X" format, distribute days proportionally
             phaseBreakdown.totalDays = installer.committed_days.length;
+            phaseBreakdown.preSeasonDays = Math.round(phaseBreakdown.totalDays * 0.10);
+            phaseBreakdown.inSeasonDays = Math.round(phaseBreakdown.totalDays * 0.60);
+            phaseBreakdown.postSeasonDays = Math.round(phaseBreakdown.totalDays * 0.20);
+            phaseBreakdown.offSeasonDays = phaseBreakdown.totalDays - phaseBreakdown.preSeasonDays - phaseBreakdown.inSeasonDays - phaseBreakdown.postSeasonDays;
         }
     } else if (typeof installer.committed_days === 'number') {
         phaseBreakdown.totalDays = installer.committed_days;
+        phaseBreakdown.preSeasonDays = Math.round(phaseBreakdown.totalDays * 0.10);
+        phaseBreakdown.inSeasonDays = Math.round(phaseBreakdown.totalDays * 0.60);
+        phaseBreakdown.postSeasonDays = Math.round(phaseBreakdown.totalDays * 0.20);
+        phaseBreakdown.offSeasonDays = phaseBreakdown.totalDays - phaseBreakdown.preSeasonDays - phaseBreakdown.inSeasonDays - phaseBreakdown.postSeasonDays;
     }
     
     // Show the detailed summary
