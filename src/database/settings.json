@@ -1,9 +1,9 @@
 {
   "revenue_ranges": {
     "beginner": {
-      "worst": 3000,
+      "worst": 3250,
       "base": 3500,
-      "best": 4500
+      "best": 4600
     },
     "intermediate": {
       "worst": 4000,
