@@ -412,7 +412,7 @@
             <button class="nav-tab active" onclick="showTab('dashboard')">Revenue Dashboard</button>
             <button class="nav-tab" onclick="showTab('settings')">Experience Level Settings</button>
             <button class="nav-tab" onclick="showTab('season')">Season Schedule & Calendar</button>
-            <button class="nav-tab" onclick="showTab('recruitment')">Recruitment Tool</button>
+            <button class="nav-tab" onclick="showTab('recruitment')">Recruitment Summary</button>
             <button class="nav-tab" onclick="showTab('installers')">Installer Management</button>
             <button class="nav-tab" onclick="window.location.href='/calendar-view.html'">📅 Calendar</button>
         </div>
@@ -487,7 +487,7 @@
         <!-- Recruitment Tool Tab -->
         <div id="recruitment" class="tab-content">
             <div class="form-section">
-                <h3>Recruitment Presentation Generator</h3>
+                <h3>Recruitment Summary</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="recruitExperience">Experience Level</label>
@@ -859,6 +859,27 @@
                         <button class="btn btn-primary" onclick="selectAllWorkingDays()">Select All Working Days</button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Installer Commitment Section -->
+            <div class="form-section" style="margin-top: 30px;">
+                <h3>Installer Commitment</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="commitInstallerName">Installer Name</label>
+                        <input type="text" id="commitInstallerName" placeholder="Enter installer name">
+                    </div>
+                    <div class="form-group">
+                        <label for="commitExperienceLevel">Experience Level</label>
+                        <select id="commitExperienceLevel">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="Expert">Expert</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="commitInstallerFromCalendar()">Commit Installer</button>
             </div>
         </div>
     </div>

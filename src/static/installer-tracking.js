@@ -335,8 +335,8 @@ function calculateInstallerCapacity(installer) {
     const perDiemRates = {
         'Beginner': 200,
         'Intermediate': 225,
-        'Advanced': 275,
-        'Expert': 300
+        'Advanced': 250,
+        'Expert': 275
     };
     
     const committedDays = Array.isArray(installer.committed_days) ? installer.committed_days.length : parseInt(installer.committed_days) || 0;
@@ -502,9 +502,16 @@ async function initializeSettings() {
     
     const settingsContainer = document.getElementById('revenueRangesSettings');
     
+    const perDiemRates = {
+        'Beginner': 200,
+        'Intermediate': 225,
+        'Advanced': 250,
+        'Expert': 275
+    };
+    
     settingsContainer.innerHTML = experienceLevels.map(level => `
         <div class="form-section">
-            <h4>${level}</h4>
+            <h4>${level} <span style="color: #6c757d; font-size: 0.9em; font-weight: normal;">($${perDiemRates[level]} Per-Diem)</span></h4>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                 ${scenarios.map(scenario => `
                     <div class="form-group">
@@ -1169,6 +1176,61 @@ const enhancedShowTab = function(tabName) {
     }
 }
 
+// Commit installer from calendar selection
+async function commitInstallerFromCalendar() {
+    const name = document.getElementById('commitInstallerName').value.trim();
+    const experience = document.getElementById('commitExperienceLevel').value;
+    
+    if (!name) {
+        alert('Please enter installer name');
+        return;
+    }
+    
+    if (selectedWorkDays.size === 0) {
+        alert('Please select at least one work day from the calendar');
+        return;
+    }
+    
+    const committedDays = Array.from(selectedWorkDays).sort();
+    
+    try {
+        const response = await fetch('/api/installers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                experience_level: experience,
+                committed_days: committedDays
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`Installer ${name} committed successfully for ${committedDays.length} days!`);
+            
+            // Clear form and selection
+            document.getElementById('commitInstallerName').value = '';
+            document.getElementById('commitExperienceLevel').value = 'Beginner';
+            clearCalendarSelection();
+            
+            // Reload installers data and update dashboard
+            await loadInstallers();
+            await updateDashboard();
+            
+            // Switch to recruitment summary tab to see the new addition
+            showTab('recruitment');
+        } else {
+            alert('Error committing installer: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error committing installer:', error);
+        alert('Error committing installer. Please try again.');
+    }
+}
+
 // Export functions for HTML
 window.showTab = enhancedShowTab;
 window.addInstaller = addInstaller;
@@ -1184,4 +1246,5 @@ window.previousMonth = previousMonth;
 window.nextMonth = nextMonth;
 window.clearCalendarSelection = clearCalendarSelection;
 window.selectAllWorkingDays = selectAllWorkingDays;
+window.commitInstallerFromCalendar = commitInstallerFromCalendar;
 
