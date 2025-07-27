@@ -495,7 +495,7 @@ async function updateRecruitmentPresentation() {
 }
 
 // Initialize settings
-function initializeSettings() {
+async function initializeSettings() {
     const experienceLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
     const scenarios = ['worst', 'base', 'best'];
     
@@ -515,34 +515,43 @@ function initializeSettings() {
         </div>
     `).join('');
     
+    // Default values
+    const defaults = {
+        'beginner': { worst: 2500, base: 3250, best: 4000 },
+        'intermediate': { worst: 4000, base: 4750, best: 5500 },
+        'advanced': { worst: 5500, base: 6250, best: 7000 },
+        'expert': { worst: 7000, base: 7750, best: 8500 }
+    };
+    
+    // Try to load saved settings
+    let savedSettings = {};
+    try {
+        const response = await fetch('/api/settings/revenue-ranges');
+        const data = await response.json();
+        if (data.success && data.data) {
+            savedSettings = data.data;
+        }
+    } catch (error) {
+        console.error('Error loading saved settings:', error);
+    }
+    
     // Add formatting to settings inputs after they are created
     setTimeout(() => {
         experienceLevels.forEach(level => {
             scenarios.forEach(scenario => {
                 const input = document.getElementById(`${level.toLowerCase()}_${scenario}`);
                 if (input) {
-                    // Set default values
-                    const defaults = {
-                        'beginner_worst': 2500,
-                        'beginner_base': 3250,
-                        'beginner_best': 4000,
-                        'intermediate_worst': 4000,
-                        'intermediate_base': 4750,
-                        'intermediate_best': 5500,
-                        'advanced_worst': 5500,
-                        'advanced_base': 6250,
-                        'advanced_best': 7000,
-                        'expert_worst': 7000,
-                        'expert_base': 7750,
-                        'expert_best': 8500
-                    };
-                    
-                    const key = `${level.toLowerCase()}_${scenario}`;
-                    if (defaults[key]) {
-                        input.value = defaults[key];
-                        input.dataset.numericValue = defaults[key];
-                        formatCurrencyInput(input);
+                    // Use saved value if available, otherwise use default
+                    let value;
+                    if (savedSettings[level.toLowerCase()] && savedSettings[level.toLowerCase()][scenario]) {
+                        value = savedSettings[level.toLowerCase()][scenario];
+                    } else {
+                        value = defaults[level.toLowerCase()][scenario];
                     }
+                    
+                    input.value = value;
+                    input.dataset.numericValue = value;
+                    formatCurrencyInput(input);
                     
                     // Add event listeners for formatting
                     input.addEventListener('focus', function() {
@@ -580,9 +589,45 @@ function initializeSettings() {
     }, 0);
 }
 
-// Save settings (placeholder)
-function saveSettings() {
-    alert('Settings saved! (This would save to the backend in a full implementation)');
+// Save settings
+async function saveSettings() {
+    const experienceLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+    const scenarios = ['worst', 'base', 'best'];
+    const revenueRanges = {};
+    
+    // Collect all values from the form
+    experienceLevels.forEach(level => {
+        revenueRanges[level.toLowerCase()] = {};
+        scenarios.forEach(scenario => {
+            const inputId = `${level.toLowerCase()}_${scenario}`;
+            const input = document.getElementById(inputId);
+            if (input) {
+                const value = parseCurrencyInput(input);
+                revenueRanges[level.toLowerCase()][scenario] = value;
+            }
+        });
+    });
+    
+    try {
+        const response = await fetch('/api/settings/revenue-ranges', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(revenueRanges)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Settings saved successfully!');
+        } else {
+            alert('Error saving settings: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        alert('Error saving settings. Please try again.');
+    }
 }
 
 // Save season settings (placeholder)
