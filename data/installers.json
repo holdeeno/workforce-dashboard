@@ -722,15 +722,5 @@
     ],
     "date_added": "2025-07-27T15:57:26.949068",
     "status": "inactive"
-  },
-  {
-    "id": 9,
-    "name": "Test",
-    "experience_level": "Beginner",
-    "committed_days": [
-      "2025-08-26"
-    ],
-    "date_added": "2025-07-27T16:14:21.982716",
-    "status": "inactive"
   }
 ]
