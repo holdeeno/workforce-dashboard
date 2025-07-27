@@ -13,9 +13,54 @@ let revenueChart = null;
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     loadInstallers();
-    loadRevenueScenarios();
+    loadRevenueGoals();
     updateDashboard();
     initializeSettings();
+    
+    // Add event listeners for revenue input formatting
+    const revenueInputs = ['worstCaseRevenue', 'baseCaseRevenue', 'bestCaseRevenue'];
+    revenueInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            // Store original value on focus
+            input.addEventListener('focus', function() {
+                // Store current numeric value before editing
+                const currentValue = parseCurrencyInput(this);
+                if (currentValue > 0) {
+                    this.dataset.numericValue = currentValue;
+                    // Show unformatted number for editing
+                    this.value = currentValue.toString();
+                }
+            });
+            
+            // Format on blur (when user leaves the field)
+            input.addEventListener('blur', function() {
+                // Update the numeric value based on what was typed
+                const typedValue = parseFloat(this.value.replace(/[^0-9.]/g, ''));
+                if (!isNaN(typedValue) && typedValue > 0) {
+                    this.dataset.numericValue = typedValue;
+                }
+                formatCurrencyInput(this);
+            });
+            
+            // Update stored value on input
+            input.addEventListener('input', function() {
+                const value = parseFloat(this.value.replace(/[^0-9.]/g, ''));
+                if (!isNaN(value)) {
+                    this.dataset.numericValue = value;
+                }
+            });
+            
+            // Allow only numbers and formatting characters while typing
+            input.addEventListener('keypress', function(e) {
+                const char = String.fromCharCode(e.which);
+                // Allow numbers, decimal point, and control keys
+                if (!char.match(/[0-9.]/) && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
 });
 
 // Tab switching functionality
@@ -60,29 +105,114 @@ async function loadInstallers() {
     }
 }
 
-// Load revenue scenarios from the API
-async function loadRevenueScenarios() {
+// Load revenue goals from the API
+async function loadRevenueGoals() {
     try {
-        const response = await fetch('/api/revenue/scenarios');
+        const response = await fetch('/api/revenue-goals');
         const data = await response.json();
         
         if (data.success) {
-            // Update global revenue ranges if needed
-            console.log('Revenue scenarios loaded:', data.data);
+            // Update global revenue targets
+            revenueTargets = data.data;
+            
+            // Update form fields with loaded values and format them
+            const worstInput = document.getElementById('worstCaseRevenue');
+            const baseInput = document.getElementById('baseCaseRevenue');
+            const bestInput = document.getElementById('bestCaseRevenue');
+            
+            // Store numeric values
+            worstInput.dataset.numericValue = data.data.worst_case;
+            baseInput.dataset.numericValue = data.data.base_case;
+            bestInput.dataset.numericValue = data.data.best_case;
+            
+            // Set and format the display values
+            worstInput.value = data.data.worst_case;
+            baseInput.value = data.data.base_case;
+            bestInput.value = data.data.best_case;
+            
+            formatCurrencyInput(worstInput);
+            formatCurrencyInput(baseInput);
+            formatCurrencyInput(bestInput);
+            
+            console.log('Revenue goals loaded:', data.data);
+            
+            // Update dashboard with loaded values
+            updateDashboard();
         }
     } catch (error) {
-        console.error('Error loading revenue scenarios:', error);
+        console.error('Error loading revenue goals:', error);
+    }
+}
+
+// Save revenue goals to the API
+async function saveRevenueGoals() {
+    // Parse values from formatted inputs
+    const worstCase = parseCurrencyInput(document.getElementById('worstCaseRevenue'));
+    const baseCase = parseCurrencyInput(document.getElementById('baseCaseRevenue'));
+    const bestCase = parseCurrencyInput(document.getElementById('bestCaseRevenue'));
+    
+    // Validate inputs
+    if (!worstCase || !baseCase || !bestCase) {
+        alert('Please enter values for all revenue scenarios');
+        return;
+    }
+    
+    if (worstCase >= baseCase || baseCase >= bestCase) {
+        alert('Invalid values: Worst case must be less than base case, and base case must be less than best case');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/revenue-goals', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                worst_case: worstCase,
+                base_case: baseCase,
+                best_case: bestCase
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update global revenue targets
+            revenueTargets = data.data;
+            
+            alert('Revenue goals saved successfully!');
+            
+            // Update dashboard with new goals
+            updateDashboard();
+        } else {
+            alert('Error saving revenue goals: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error saving revenue goals:', error);
+        alert('Error saving revenue goals. Please try again.');
     }
 }
 
 // Update the main dashboard
 async function updateDashboard() {
-    const scenario = document.getElementById('revenueScenario').value;
-    const customRevenue = document.getElementById('customRevenue').value;
+    const scenario = document.getElementById('activeScenario').value;
+    currentScenario = scenario;  // Update global current scenario
     
-    let targetRevenue = revenueTargets[scenario];
-    if (customRevenue && customRevenue > 0) {
-        targetRevenue = parseInt(customRevenue);
+    // Map scenario to revenue target
+    let targetRevenue;
+    switch(scenario) {
+        case 'worst':
+            targetRevenue = revenueTargets.worst_case || revenueTargets.worst;
+            break;
+        case 'base':
+            targetRevenue = revenueTargets.base_case || revenueTargets.base;
+            break;
+        case 'best':
+            targetRevenue = revenueTargets.best_case || revenueTargets.best;
+            break;
+        default:
+            targetRevenue = revenueTargets.base_case || revenueTargets.base;
     }
     
     try {
@@ -404,5 +534,44 @@ function formatCurrency(amount) {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(amount);
+}
+
+// Format currency input fields
+function formatCurrencyInput(input) {
+    // Store the numeric value in a data attribute
+    let numValue;
+    
+    // If we have a stored numeric value, use it
+    if (input.dataset.numericValue) {
+        numValue = parseFloat(input.dataset.numericValue);
+    } else {
+        // Otherwise, parse the current value
+        let value = input.value.replace(/[^0-9.]/g, '');
+        numValue = parseFloat(value) || 0;
+    }
+    
+    // Don't format if the value is 0 or empty
+    if (numValue === 0 && input.value.trim() === '') {
+        return;
+    }
+    
+    // Store the numeric value
+    input.dataset.numericValue = numValue;
+    
+    // Format with commas
+    input.value = numValue.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+}
+
+// Parse currency input back to number
+function parseCurrencyInput(input) {
+    // First check if we have a stored numeric value
+    if (input.dataset.numericValue) {
+        return parseFloat(input.dataset.numericValue) || 0;
+    }
+    // Otherwise, parse the displayed value
+    return parseFloat(input.value.replace(/[^0-9.]/g, '')) || 0;
 }
 

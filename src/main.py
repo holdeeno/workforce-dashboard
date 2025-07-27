@@ -10,6 +10,7 @@ from src.routes.user import user_bp
 from src.routes.workforce import workforce_bp
 from src.routes.analytics import analytics_bp
 from src.routes.installer import installer_bp
+from src.routes.revenue_goals import revenue_goals_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -21,6 +22,7 @@ app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(workforce_bp, url_prefix='/api/workforce')
 app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
 app.register_blueprint(installer_bp)
+app.register_blueprint(revenue_goals_bp, url_prefix='/api')
 
 # uncomment if you need to use database
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
@@ -48,4 +50,4 @@ def serve(path):
 
 if __name__ == '__main__':
     # For local development
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True)

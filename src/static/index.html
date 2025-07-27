@@ -362,22 +362,29 @@
             </div>
 
             <div class="form-section">
-                <h3>Revenue Scenario Selection</h3>
-                <div class="form-grid">
+                <h3>Revenue Goals Configuration</h3>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                     <div class="form-group">
-                        <label for="revenueScenario">Scenario</label>
-                        <select id="revenueScenario" onchange="updateDashboard()">
-                            <option value="worst">Worst Case ($1,200,000)</option>
-                            <option value="base" selected>Base Case ($1,500,000)</option>
-                            <option value="best">Best Case ($1,800,000)</option>
-                        </select>
+                        <label for="worstCaseRevenue">Worst Case Revenue</label>
+                        <input type="text" id="worstCaseRevenue" placeholder="Enter worst case">
                     </div>
                     <div class="form-group">
-                        <label for="customRevenue">Custom Target Revenue</label>
-                        <input type="number" id="customRevenue" placeholder="Enter custom amount">
+                        <label for="baseCaseRevenue">Base Case Revenue</label>
+                        <input type="text" id="baseCaseRevenue" placeholder="Enter base case">
+                    </div>
+                    <div class="form-group">
+                        <label for="bestCaseRevenue">Best Case Revenue</label>
+                        <input type="text" id="bestCaseRevenue" placeholder="Enter best case">
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="updateDashboard()">Update Dashboard</button>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="saveRevenueGoals()">Save Revenue Goals</button>
+                    <select id="activeScenario" onchange="updateDashboard()" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;">
+                        <option value="worst">View Worst Case</option>
+                        <option value="base" selected>View Base Case</option>
+                        <option value="best">View Best Case</option>
+                    </select>
+                </div>
             </div>
 
             <div class="chart-container">
