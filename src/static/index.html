@@ -543,31 +543,124 @@
                 <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
                     <div>
                         <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">Season Phases</h4>
-                        <div style="display: flex; flex-direction: column; gap: 15px;">
-                            <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">Pre-Season (Aug-Sep)</div>
-                                <div style="font-size: 0.9em; color: #6c757d;">Setup, training, equipment prep</div>
-                            </div>
-                            <div style="padding: 15px; background: #e3f2fd; border-radius: 8px;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">In-Season (Oct-Dec)</div>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="season-tab active" onclick="showSeasonContent('pre-season')" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; text-align: left; cursor: pointer; transition: all 0.3s;">
+                                <div style="font-weight: 600; margin-bottom: 5px;">Pre-Season (August-September)</div>
+                                <div style="font-size: 0.9em; opacity: 0.9;">Setup, training, equipment prep</div>
+                            </button>
+                            <button class="season-tab" onclick="showSeasonContent('in-season')" style="padding: 15px; background: #f8f9fa; border: none; border-radius: 8px; text-align: left; cursor: pointer; transition: all 0.3s;">
+                                <div style="font-weight: 600; margin-bottom: 5px; color: #2c3e50;">In-Season (September-December)</div>
                                 <div style="font-size: 0.9em; color: #6c757d;">Peak installation period</div>
-                            </div>
-                            <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">Post-Season (Jan-Feb)</div>
+                            </button>
+                            <button class="season-tab" onclick="showSeasonContent('post-season')" style="padding: 15px; background: #f8f9fa; border: none; border-radius: 8px; text-align: left; cursor: pointer; transition: all 0.3s;">
+                                <div style="font-weight: 600; margin-bottom: 5px; color: #2c3e50;">Post-Season (December-January)</div>
                                 <div style="font-size: 0.9em; color: #6c757d;">Removal and storage</div>
-                            </div>
+                            </button>
+                            <button class="season-tab" onclick="showSeasonContent('off-season')" style="padding: 15px; background: #f8f9fa; border: none; border-radius: 8px; text-align: left; cursor: pointer; transition: all 0.3s;">
+                                <div style="font-weight: 600; margin-bottom: 5px; color: #2c3e50;">Off-Season (February)</div>
+                                <div style="font-size: 0.9em; color: #6c757d;">Planning and preparation</div>
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">Work Schedule</h4>
-                        <ul style="list-style: none; padding: 0; line-height: 2;">
-                            <li>• <strong>Hours:</strong> 7:00 AM - 7:00 PM (12 hours/day)</li>
-                            <li>• <strong>Days:</strong> Variable schedule, 4-6 days per week</li>
-                            <li>• <strong>Location:</strong> Phoenix metropolitan area</li>
-                            <li>• <strong>Transportation:</strong> Company vehicles provided</li>
-                            <li>• <strong>Equipment:</strong> All tools and materials provided</li>
-                            <li>• <strong>Uniforms:</strong> Provided and required daily</li>
-                        </ul>
+                    <div id="season-details">
+                        <!-- Pre-Season Content -->
+                        <div id="pre-season-content" class="season-content" style="display: block;">
+                            <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">Pre-Season Overview (August-September)</h4>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                                <h5 style="color: #3498db; margin-bottom: 10px;">Key Activities</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• Equipment inspection and maintenance</li>
+                                    <li>• Team training and safety briefings</li>
+                                    <li>• Route planning and optimization</li>
+                                    <li>• Customer consultations and quotes</li>
+                                    <li>• Inventory preparation and ordering</li>
+                                </ul>
+                            </div>
+                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px;">
+                                <h5 style="color: #2c3e50; margin-bottom: 10px;">Expected Hours</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• <strong>Work Days:</strong> 2-3 days per week</li>
+                                    <li>• <strong>Hours:</strong> 8:00 AM - 5:00 PM</li>
+                                    <li>• <strong>Focus:</strong> Training and preparation</li>
+                                    <li>• <strong>Compensation:</strong> Full per diem rate applies</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- In-Season Content -->
+                        <div id="in-season-content" class="season-content" style="display: none;">
+                            <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">In-Season Peak (September-December)</h4>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                                <h5 style="color: #3498db; margin-bottom: 10px;">Daily Operations</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• <strong>Hours:</strong> 7:00 AM - 7:00 PM (12 hours/day)</li>
+                                    <li>• <strong>Days:</strong> 5-6 days per week</li>
+                                    <li>• <strong>Location:</strong> Phoenix metropolitan area</li>
+                                    <li>• <strong>Transportation:</strong> Company vehicles provided</li>
+                                    <li>• <strong>Equipment:</strong> All tools and materials provided</li>
+                                    <li>• <strong>Uniforms:</strong> Provided and required daily</li>
+                                </ul>
+                            </div>
+                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px;">
+                                <h5 style="color: #2c3e50; margin-bottom: 10px;">Performance Expectations</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• Complete 3-5 installations per day</li>
+                                    <li>• Maintain quality standards</li>
+                                    <li>• Customer satisfaction focus</li>
+                                    <li>• Safety compliance mandatory</li>
+                                    <li>• Production bonuses available</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Post-Season Content -->
+                        <div id="post-season-content" class="season-content" style="display: none;">
+                            <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">Post-Season Activities (December-January)</h4>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                                <h5 style="color: #3498db; margin-bottom: 10px;">Light Removal Process</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• Scheduled removal appointments</li>
+                                    <li>• Careful light and decoration removal</li>
+                                    <li>• Storage and organization</li>
+                                    <li>• Equipment maintenance</li>
+                                    <li>• Customer follow-up</li>
+                                </ul>
+                            </div>
+                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px;">
+                                <h5 style="color: #2c3e50; margin-bottom: 10px;">Schedule</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• <strong>Work Days:</strong> 4-5 days per week</li>
+                                    <li>• <strong>Hours:</strong> 8:00 AM - 5:00 PM</li>
+                                    <li>• <strong>Pace:</strong> Moderate, quality-focused</li>
+                                    <li>• <strong>Bonus:</strong> Completion bonuses available</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Off-Season Content -->
+                        <div id="off-season-content" class="season-content" style="display: none;">
+                            <h4 style="font-size: 1.2em; margin-bottom: 15px; color: #2c3e50;">Off-Season Planning (February)</h4>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                                <h5 style="color: #3498db; margin-bottom: 10px;">Planning & Development</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• Annual performance reviews</li>
+                                    <li>• Skills development training</li>
+                                    <li>• Equipment upgrades planning</li>
+                                    <li>• Process improvements</li>
+                                    <li>• Team building activities</li>
+                                </ul>
+                            </div>
+                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px;">
+                                <h5 style="color: #2c3e50; margin-bottom: 10px;">Opportunities</h5>
+                                <ul style="list-style: none; padding: 0; line-height: 1.8;">
+                                    <li>• Optional work available</li>
+                                    <li>• Leadership development</li>
+                                    <li>• Cross-training opportunities</li>
+                                    <li>• Vacation time encouraged</li>
+                                    <li>• Planning for next season</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

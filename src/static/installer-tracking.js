@@ -684,3 +684,33 @@ function parseCurrencyInput(input) {
     return parseFloat(input.value.replace(/[^0-9.]/g, '')) || 0;
 }
 
+// Show season content based on selected tab
+function showSeasonContent(season) {
+    // Update tab styling
+    const tabs = document.querySelectorAll('.season-tab');
+    tabs.forEach(tab => {
+        tab.style.background = '#f8f9fa';
+        tab.style.color = '';
+        tab.querySelector('div:first-child').style.color = '#2c3e50';
+        tab.querySelector('div:last-child').style.color = '#6c757d';
+    });
+    
+    // Style the active tab
+    const activeTab = event.target.closest('.season-tab');
+    activeTab.style.background = '#3498db';
+    activeTab.style.color = 'white';
+    activeTab.querySelector('div:first-child').style.color = '';
+    activeTab.querySelector('div:last-child').style.color = '';
+    activeTab.querySelector('div:last-child').style.opacity = '0.9';
+    
+    // Hide all season contents
+    const contents = document.querySelectorAll('.season-content');
+    contents.forEach(content => content.style.display = 'none');
+    
+    // Show selected season content
+    const selectedContent = document.getElementById(`${season}-content`);
+    if (selectedContent) {
+        selectedContent.style.display = 'block';
+    }
+}
+
