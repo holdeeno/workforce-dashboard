@@ -826,6 +826,10 @@ async function saveSeasonDates() {
         
         if (data.success) {
             alert('Season dates saved successfully!');
+            // Refresh calendar if it's visible
+            if (document.getElementById('season').classList.contains('active')) {
+                initializeCalendar();
+            }
         } else {
             alert('Error saving season dates: ' + (data.error || 'Unknown error'));
         }
@@ -897,8 +901,276 @@ function validateSeasonDates(seasonDates) {
     return { valid: true };
 }
 
+// Calendar state
+let calendarCurrentDate = new Date();
+let selectedWorkDays = new Set();
+let seasonDates = {};
+
+// Initialize calendar when season tab is shown
+function initializeCalendar() {
+    // Get season dates from inputs
+    seasonDates = {
+        'pre-season': {
+            start: document.getElementById('pre-season-start').value,
+            end: document.getElementById('pre-season-end').value
+        },
+        'in-season': {
+            start: document.getElementById('in-season-start').value,
+            end: document.getElementById('in-season-end').value
+        },
+        'post-season': {
+            start: document.getElementById('post-season-start').value,
+            end: document.getElementById('post-season-end').value
+        },
+        'off-season': {
+            start: document.getElementById('off-season-start').value,
+            end: document.getElementById('off-season-end').value
+        }
+    };
+    
+    // Set calendar to first month with season dates
+    const firstSeasonStart = getEarliestSeasonDate();
+    if (firstSeasonStart) {
+        calendarCurrentDate = new Date(firstSeasonStart);
+        calendarCurrentDate.setDate(1); // Go to first day of month
+    }
+    
+    renderCalendar();
+}
+
+// Get earliest season start date
+function getEarliestSeasonDate() {
+    let earliestDate = null;
+    
+    Object.values(seasonDates).forEach(season => {
+        if (season.start) {
+            const startDate = new Date(season.start);
+            if (!earliestDate || startDate < earliestDate) {
+                earliestDate = startDate;
+            }
+        }
+    });
+    
+    return earliestDate;
+}
+
+// Render the calendar
+function renderCalendar() {
+    const grid = document.getElementById('workCalendarGrid');
+    if (!grid) return;
+    
+    const year = calendarCurrentDate.getFullYear();
+    const month = calendarCurrentDate.getMonth();
+    
+    // Update month display
+    const monthDisplay = document.getElementById('currentMonth');
+    if (monthDisplay) {
+        monthDisplay.textContent = calendarCurrentDate.toLocaleDateString('en-US', { 
+            month: 'long', 
+            year: 'numeric' 
+        });
+    }
+    
+    // Clear grid
+    grid.innerHTML = '';
+    
+    // Add day headers
+    const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    dayHeaders.forEach(day => {
+        const header = document.createElement('div');
+        header.className = 'calendar-header';
+        header.textContent = day;
+        grid.appendChild(header);
+    });
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    // Generate calendar days
+    for (let i = 0; i < 42; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        
+        const isCurrentMonth = date.getMonth() === month;
+        const dateString = date.toISOString().split('T')[0];
+        
+        if (!isCurrentMonth) {
+            dayElement.classList.add('disabled');
+        } else {
+            // Determine season
+            const season = getSeasonForDate(date);
+            
+            if (season) {
+                dayElement.classList.add(season);
+                dayElement.onclick = () => toggleDay(dateString, dayElement);
+                
+                if (selectedWorkDays.has(dateString)) {
+                    dayElement.classList.add('selected');
+                }
+            } else {
+                dayElement.classList.add('disabled');
+            }
+        }
+        
+        dayElement.innerHTML = `
+            <div class="day-number">${date.getDate()}</div>
+            <div class="day-info">${isCurrentMonth ? (getSeasonForDate(date) || 'off').replace('-season', '') : ''}</div>
+        `;
+        
+        grid.appendChild(dayElement);
+    }
+    
+    updateSelectedDaysSummary();
+}
+
+// Get season for a specific date
+function getSeasonForDate(date) {
+    const dateString = date.toISOString().split('T')[0];
+    
+    for (const [seasonName, dates] of Object.entries(seasonDates)) {
+        if (dates.start && dates.end) {
+            const startDate = new Date(dates.start);
+            const endDate = new Date(dates.end);
+            
+            if (date >= startDate && date <= endDate) {
+                return seasonName;
+            }
+        }
+    }
+    
+    return null;
+}
+
+// Check if date is within selectable range
+function isSelectableDay(date) {
+    const day = date.getDay();
+    return day >= 0 && day <= 6; // Sunday through Saturday (all days)
+}
+
+// Toggle day selection
+function toggleDay(dateString, element) {
+    if (selectedWorkDays.has(dateString)) {
+        selectedWorkDays.delete(dateString);
+        element.classList.remove('selected');
+    } else {
+        selectedWorkDays.add(dateString);
+        element.classList.add('selected');
+    }
+    
+    updateSelectedDaysSummary();
+}
+
+// Update selected days summary
+function updateSelectedDaysSummary() {
+    const totalDays = selectedWorkDays.size;
+    let preSeasonCount = 0;
+    let inSeasonCount = 0;
+    let postSeasonCount = 0;
+    let offSeasonCount = 0;
+    
+    selectedWorkDays.forEach(dateString => {
+        const date = new Date(dateString);
+        const season = getSeasonForDate(date);
+        
+        switch(season) {
+            case 'pre-season':
+                preSeasonCount++;
+                break;
+            case 'in-season':
+                inSeasonCount++;
+                break;
+            case 'post-season':
+                postSeasonCount++;
+                break;
+            case 'off-season':
+                offSeasonCount++;
+                break;
+        }
+    });
+    
+    // Update display
+    document.getElementById('totalSelectedDays').textContent = totalDays;
+    document.getElementById('preSeasonDays').textContent = preSeasonCount;
+    document.getElementById('inSeasonDays').textContent = inSeasonCount;
+    document.getElementById('postSeasonDays').textContent = postSeasonCount;
+    document.getElementById('offSeasonDays').textContent = offSeasonCount;
+}
+
+// Navigate to previous month
+function previousMonth() {
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1);
+    renderCalendar();
+}
+
+// Navigate to next month
+function nextMonth() {
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1);
+    renderCalendar();
+}
+
+// Clear all selected days
+function clearCalendarSelection() {
+    selectedWorkDays.clear();
+    renderCalendar();
+}
+
+// Select all working days in visible month
+function selectAllWorkingDays() {
+    const year = calendarCurrentDate.getFullYear();
+    const month = calendarCurrentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+        const season = getSeasonForDate(date);
+        if (season) {
+            selectedWorkDays.add(date.toISOString().split('T')[0]);
+        }
+    }
+    
+    renderCalendar();
+}
+
+// Override showTab to initialize calendar when season tab is shown
+const originalShowTab = showTab;
+const enhancedShowTab = function(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    // Remove active class from all nav tabs
+    const navTabs = document.querySelectorAll('.nav-tab');
+    navTabs.forEach(tab => tab.classList.remove('active'));
+    
+    // Show selected tab content
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active class to clicked nav tab
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
+    
+    // Refresh data when switching to dashboard
+    if (tabName === 'dashboard') {
+        updateDashboard();
+    } else if (tabName === 'installers') {
+        loadInstallers();
+    } else if (tabName === 'season') {
+        // Initialize calendar when season tab is shown
+        setTimeout(() => {
+            initializeCalendar();
+        }, 100);
+    }
+}
+
 // Export functions for HTML
-window.showTab = showTab;
+window.showTab = enhancedShowTab;
 window.addInstaller = addInstaller;
 window.removeInstaller = removeInstaller;
 window.saveSettings = saveSettings;
@@ -908,4 +1180,8 @@ window.saveSeasonSettings = saveSeasonSettings;
 window.updateDashboard = updateDashboard;
 window.showSeasonContent = showSeasonContent;
 window.saveSeasonDates = saveSeasonDates;
+window.previousMonth = previousMonth;
+window.nextMonth = nextMonth;
+window.clearCalendarSelection = clearCalendarSelection;
+window.selectAllWorkingDays = selectAllWorkingDays;
 

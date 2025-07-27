@@ -308,6 +308,78 @@
             opacity: 0.9;
         }
 
+        /* Calendar specific styles */
+        .calendar-day {
+            background: white;
+            min-height: 80px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .calendar-day:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .calendar-day.selected {
+            border-color: #00b894;
+            background: #d1f2eb;
+        }
+
+        .calendar-day.pre-season {
+            background: #ffeaa7;
+        }
+
+        .calendar-day.in-season {
+            background: #fd79a8;
+        }
+
+        .calendar-day.post-season {
+            background: #81ecec;
+        }
+
+        .calendar-day.off-season {
+            background: #ddd;
+        }
+
+        .calendar-day.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .calendar-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .day-number {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .day-info {
+            font-size: 0.8em;
+            color: #2c3e50;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
         @media (max-width: 768px) {
             .dashboard-grid, .form-grid, .scenario-comparison {
                 grid-template-columns: 1fr;
@@ -713,6 +785,79 @@
                 </div>
                 <div style="margin-top: 20px; text-align: center;">
                     <button class="btn btn-primary" onclick="saveSeasonDates()">Save Season Dates</button>
+                </div>
+            </div>
+            
+            <!-- Work Calendar Section -->
+            <div class="form-section" style="margin-top: 30px;">
+                <h3>Work Calendar</h3>
+                <p style="margin-bottom: 20px; color: #6c757d;">Select available work days based on the season phases defined above</p>
+                
+                <!-- Calendar Controls -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; gap: 20px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #ffeaa7; border-radius: 4px;"></div>
+                            <span>Pre-Season</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #fd79a8; border-radius: 4px;"></div>
+                            <span>In-Season</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #81ecec; border-radius: 4px;"></div>
+                            <span>Post-Season</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #ddd; border-radius: 4px;"></div>
+                            <span>Off-Season</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; background: #00b894; border-radius: 4px;"></div>
+                            <span>Selected</span>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" onclick="previousMonth()" style="padding: 8px 12px;">← Previous</button>
+                        <span id="currentMonth" style="margin: 0 20px; font-weight: 600;">October 2024</span>
+                        <button class="btn btn-secondary" onclick="nextMonth()" style="padding: 8px 12px;">Next →</button>
+                    </div>
+                </div>
+                
+                <!-- Calendar Grid -->
+                <div id="workCalendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e9ecef; border-radius: 10px; overflow: hidden;">
+                    <!-- Calendar will be populated by JavaScript -->
+                </div>
+                
+                <!-- Selected Days Summary -->
+                <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <h4>Selected Work Days Summary</h4>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 15px;">
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: 600; color: #3498db;" id="totalSelectedDays">0</div>
+                            <div style="color: #6c757d; font-size: 14px;">Total Days</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: 600; color: #ffeaa7;" id="preSeasonDays">0</div>
+                            <div style="color: #6c757d; font-size: 14px;">Pre-Season</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: 600; color: #fd79a8;" id="inSeasonDays">0</div>
+                            <div style="color: #6c757d; font-size: 14px;">In-Season</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: 600; color: #81ecec;" id="postSeasonDays">0</div>
+                            <div style="color: #6c757d; font-size: 14px;">Post-Season</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: 600; color: #888;" id="offSeasonDays">0</div>
+                            <div style="color: #6c757d; font-size: 14px;">Off-Season</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="clearCalendarSelection()">Clear All</button>
+                        <button class="btn btn-primary" onclick="selectAllWorkingDays()">Select All Working Days</button>
+                    </div>
                 </div>
             </div>
         </div>
