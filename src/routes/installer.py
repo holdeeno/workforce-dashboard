@@ -94,9 +94,20 @@ def update_installer(installer_id):
 
 @installer_bp.route('/api/installers/<int:installer_id>', methods=['DELETE'])
 def remove_installer(installer_id):
-    """Remove (deactivate) installer."""
+    """Remove (deactivate) or permanently delete installer."""
     try:
-        success = installer_db.remove_installer(installer_id)
+        # Check if permanent deletion is requested
+        permanent = request.args.get('permanent', 'false').lower() == 'true'
+        
+        if permanent:
+            # Permanently delete the installer
+            success = installer_db.delete_installer(installer_id)
+            message = 'Installer permanently deleted'
+        else:
+            # Just mark as inactive
+            success = installer_db.remove_installer(installer_id)
+            message = 'Installer removed successfully'
+            
         if not success:
             return jsonify({
                 'success': False, 
@@ -105,7 +116,7 @@ def remove_installer(installer_id):
         
         return jsonify({
             'success': True,
-            'message': 'Installer removed successfully'
+            'message': message
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

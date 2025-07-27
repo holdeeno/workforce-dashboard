@@ -1465,7 +1465,8 @@ async function showAllInstallersRecruitmentSummary() {
                     <td style="text-align: center; color: #888;">${phaseBreakdown.offSeasonDays}</td>
                     <td style="text-align: center;"><strong>${formatCurrency(compensation.totalCompensation)}</strong></td>
                     <td>
-                        <button class="btn btn-primary" onclick="showIndividualRecruitmentSummary(${installer.id})" style="padding: 5px 10px; font-size: 0.8em;">View Details</button>
+                        <button class="btn btn-primary" onclick="showIndividualRecruitmentSummary(${installer.id})" style="padding: 5px 10px; font-size: 0.8em; margin-right: 5px;">View Details</button>
+                        <button class="btn btn-danger" onclick="deleteInstallerFromRecruitment(${installer.id}, '${installer.name.replace(/'/g, "\\'")}')" style="padding: 5px 10px; font-size: 0.8em;">Delete</button>
                     </td>
                 </tr>
             `;
@@ -1666,6 +1667,37 @@ function showRecruitmentSummary(installerData) {
     }
 }
 
+// Delete installer from recruitment summary (permanent deletion)
+async function deleteInstallerFromRecruitment(installerId, installerName) {
+    if (!confirm(`Are you sure you want to permanently delete ${installerName}? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/installers/${installerId}?permanent=true`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Reload installers data
+            await loadInstallers();
+            await updateDashboard();
+            
+            // Refresh the recruitment summary view
+            showAllInstallersRecruitmentSummary();
+            
+            alert(`${installerName} has been permanently deleted.`);
+        } else {
+            alert('Error deleting installer: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error deleting installer:', error);
+        alert('Error deleting installer. Please try again.');
+    }
+}
+
 // Export functions for HTML
 window.showTab = enhancedShowTab;
 window.removeInstaller = removeInstaller;
@@ -1682,4 +1714,5 @@ window.clearCalendarSelection = clearCalendarSelection;
 window.selectAllWorkingDays = selectAllWorkingDays;
 window.commitInstallerFromCalendar = commitInstallerFromCalendar;
 window.showRecruitmentForm = showRecruitmentForm;
+window.deleteInstallerFromRecruitment = deleteInstallerFromRecruitment;
 

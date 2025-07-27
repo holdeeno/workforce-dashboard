@@ -76,6 +76,15 @@ class InstallerDatabase:
     def remove_installer(self, installer_id: int) -> bool:
         """Mark installer as inactive."""
         return self.update_installer(installer_id, {'status': 'inactive'})
+    
+    def delete_installer(self, installer_id: int) -> bool:
+        """Permanently delete installer from database."""
+        for i, installer in enumerate(self.installers):
+            if installer['id'] == installer_id:
+                del self.installers[i]
+                self.save_installers()
+                return True
+        return False
 
 
 class RevenueTracker:
