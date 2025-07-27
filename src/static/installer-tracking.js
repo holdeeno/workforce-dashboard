@@ -10,6 +10,79 @@ let revenueTargets = {
 let installers = [];
 let revenueChart = null;
 
+// Modal utility functions
+function showModal(title, message, buttons = []) {
+    const modal = document.getElementById('customModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalButtons = document.getElementById('modalButtons');
+    
+    // Set content
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+    
+    // Clear existing buttons
+    modalButtons.innerHTML = '';
+    
+    // Add buttons
+    buttons.forEach(button => {
+        const btn = document.createElement('button');
+        btn.className = `modal-btn ${button.class || 'modal-btn-primary'}`;
+        btn.textContent = button.text;
+        btn.onclick = () => {
+            if (button.callback) button.callback();
+            hideModal();
+        };
+        modalButtons.appendChild(btn);
+    });
+    
+    // Show modal
+    modal.style.display = 'flex';
+}
+
+function hideModal() {
+    const modal = document.getElementById('customModal');
+    modal.style.display = 'none';
+}
+
+// Replacement for alert()
+function showAlert(message, title = 'Alert') {
+    showModal(title, message, [
+        { text: 'OK', class: 'modal-btn-primary' }
+    ]);
+}
+
+// Replacement for confirm()
+function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
+    showModal(title, message, [
+        { 
+            text: 'Cancel', 
+            class: 'modal-btn-secondary',
+            callback: onCancel
+        },
+        { 
+            text: 'Confirm', 
+            class: 'modal-btn-primary',
+            callback: onConfirm
+        }
+    ]);
+}
+
+// Special confirm for delete operations
+function showDeleteConfirm(message, onConfirm, title = 'Confirm Delete') {
+    showModal(title, message, [
+        { 
+            text: 'Cancel', 
+            class: 'modal-btn-secondary'
+        },
+        { 
+            text: 'Delete', 
+            class: 'modal-btn-danger',
+            callback: onConfirm
+        }
+    ]);
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     loadInstallers();
@@ -152,12 +225,12 @@ async function saveRevenueGoals() {
     
     // Validate inputs
     if (!worstCase || !baseCase || !bestCase) {
-        alert('Please enter values for all revenue scenarios');
+        showAlert('Please enter values for all revenue scenarios', 'Missing Values');
         return;
     }
     
     if (worstCase >= baseCase || baseCase >= bestCase) {
-        alert('Invalid values: Worst case must be less than base case, and base case must be less than best case');
+        showAlert('Invalid values: Worst case must be less than base case, and base case must be less than best case', 'Invalid Values');
         return;
     }
     
@@ -180,16 +253,16 @@ async function saveRevenueGoals() {
             // Update global revenue targets
             revenueTargets = data.data;
             
-            alert('Revenue goals saved successfully!');
+            showAlert('Revenue goals saved successfully!', 'Success');
             
             // Update dashboard with new goals
             updateDashboard();
         } else {
-            alert('Error saving revenue goals: ' + data.error);
+            showAlert('Error saving revenue goals: ' + data.error, 'Error');
         }
     } catch (error) {
         console.error('Error saving revenue goals:', error);
-        alert('Error saving revenue goals. Please try again.');
+        showAlert('Error saving revenue goals. Please try again.', 'Error');
     }
 }
 
@@ -358,7 +431,7 @@ async function addInstaller() {
     const daysInput = document.getElementById('installerDays').value.trim();
     
     if (!name) {
-        alert('Please enter installer name');
+        showAlert('Please enter installer name', 'Missing Information');
         return;
     }
     
@@ -399,40 +472,38 @@ async function addInstaller() {
             await loadInstallers();
             await updateDashboard();
             
-            alert(`Installer ${name} added successfully!`);
+            showAlert(`Installer ${name} added successfully!`, 'Success');
         } else {
-            alert('Error adding installer: ' + data.error);
+            showAlert('Error adding installer: ' + data.error, 'Error');
         }
     } catch (error) {
         console.error('Error adding installer:', error);
-        alert('Error adding installer. Please try again.');
+        showAlert('Error adding installer. Please try again.', 'Error');
     }
 }
 
 // Remove installer
 async function removeInstaller(installerId) {
-    if (!confirm('Are you sure you want to remove this installer?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/installers/${installerId}`, {
-            method: 'DELETE'
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            await loadInstallers();
-            await updateDashboard();
-            alert('Installer removed successfully!');
-        } else {
-            alert('Error removing installer: ' + data.error);
+    showDeleteConfirm('Are you sure you want to remove this installer?', async () => {
+        try {
+            const response = await fetch(`/api/installers/${installerId}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                await loadInstallers();
+                await updateDashboard();
+                showAlert('Installer removed successfully!', 'Success');
+            } else {
+                showAlert('Error removing installer: ' + data.error, 'Error');
+            }
+        } catch (error) {
+            console.error('Error removing installer:', error);
+            showAlert('Error removing installer. Please try again.', 'Error');
         }
-    } catch (error) {
-        console.error('Error removing installer:', error);
-        alert('Error removing installer. Please try again.');
-    }
+    });
 }
 
 // Show recruitment form for new installer calculation
@@ -662,19 +733,19 @@ async function saveSettings() {
         const data = await response.json();
         
         if (data.success) {
-            alert('Settings saved successfully!');
+            showAlert('Settings saved successfully!', 'Success');
         } else {
-            alert('Error saving settings: ' + (data.error || 'Unknown error'));
+            showAlert('Error saving settings: ' + (data.error || 'Unknown error'), 'Error');
         }
     } catch (error) {
         console.error('Error saving settings:', error);
-        alert('Error saving settings. Please try again.');
+        showAlert('Error saving settings. Please try again.', 'Error');
     }
 }
 
 // Save season settings (placeholder)
 function saveSeasonSettings() {
-    alert('Season settings saved! (This would save to the backend in a full implementation)');
+    showAlert('Season settings saved! (This would save to the backend in a full implementation)', 'Success');
 }
 
 // Utility function to format currency
@@ -850,7 +921,7 @@ async function saveSeasonDates() {
     // Validate dates
     const validation = validateSeasonDates(seasonDates);
     if (!validation.valid) {
-        alert(validation.message);
+        showAlert(validation.message, 'Validation Error');
         return;
     }
     
@@ -866,17 +937,17 @@ async function saveSeasonDates() {
         const data = await response.json();
         
         if (data.success) {
-            alert('Season dates saved successfully!');
+            showAlert('Season dates saved successfully!', 'Success');
             // Refresh calendar if it's visible
             if (document.getElementById('season').classList.contains('active')) {
                 initializeCalendar();
             }
         } else {
-            alert('Error saving season dates: ' + (data.error || 'Unknown error'));
+            showAlert('Error saving season dates: ' + (data.error || 'Unknown error'), 'Error');
         }
     } catch (error) {
         console.error('Error saving season dates:', error);
-        alert('Error saving season dates. Please try again.');
+        showAlert('Error saving season dates. Please try again.', 'Error');
     }
 }
 
@@ -1310,12 +1381,12 @@ async function commitInstallerFromCalendar() {
     const experience = document.getElementById('commitExperienceLevel').value;
     
     if (!name) {
-        alert('Please enter installer name');
+        showAlert('Please enter installer name', 'Missing Information');
         return;
     }
     
     if (selectedWorkDays.size === 0) {
-        alert('Please select at least one work day from the calendar');
+        showAlert('Please select at least one work day from the calendar', 'Missing Selection');
         return;
     }
     
@@ -1337,7 +1408,7 @@ async function commitInstallerFromCalendar() {
         const data = await response.json();
         
         if (data.success) {
-            alert(`Installer ${name} committed successfully for ${committedDays.length} days!`);
+            showAlert(`Installer ${name} committed successfully for ${committedDays.length} days!`, 'Success');
             
             // Clear form and selection
             document.getElementById('commitInstallerName').value = '';
@@ -1360,11 +1431,11 @@ async function commitInstallerFromCalendar() {
             // Switch to recruitment summary tab to see the new addition
             showTab('recruitment');
         } else {
-            alert('Error committing installer: ' + data.error);
+            showAlert('Error committing installer: ' + data.error, 'Error');
         }
     } catch (error) {
         console.error('Error committing installer:', error);
-        alert('Error committing installer. Please try again.');
+        showAlert('Error committing installer. Please try again.', 'Error');
     }
 }
 
@@ -1669,33 +1740,35 @@ function showRecruitmentSummary(installerData) {
 
 // Delete installer from recruitment summary (permanent deletion)
 async function deleteInstallerFromRecruitment(installerId, installerName) {
-    if (!confirm(`Are you sure you want to permanently delete ${installerName}? This action cannot be undone.`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/installers/${installerId}?permanent=true`, {
-            method: 'DELETE'
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Reload installers data
-            await loadInstallers();
-            await updateDashboard();
-            
-            // Refresh the recruitment summary view
-            showAllInstallersRecruitmentSummary();
-            
-            alert(`${installerName} has been permanently deleted.`);
-        } else {
-            alert('Error deleting installer: ' + data.error);
-        }
-    } catch (error) {
-        console.error('Error deleting installer:', error);
-        alert('Error deleting installer. Please try again.');
-    }
+    showDeleteConfirm(
+        `Are you sure you want to permanently delete ${installerName}? This action cannot be undone.`,
+        async () => {
+            try {
+                const response = await fetch(`/api/installers/${installerId}?permanent=true`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload installers data
+                    await loadInstallers();
+                    await updateDashboard();
+                    
+                    // Refresh the recruitment summary view
+                    showAllInstallersRecruitmentSummary();
+                    
+                    showAlert(`${installerName} has been permanently deleted.`, 'Success');
+                } else {
+                    showAlert('Error deleting installer: ' + data.error, 'Error');
+                }
+            } catch (error) {
+                console.error('Error deleting installer:', error);
+                showAlert('Error deleting installer. Please try again.', 'Error');
+            }
+        },
+        'Confirm Permanent Deletion'
+    );
 }
 
 // Export functions for HTML
