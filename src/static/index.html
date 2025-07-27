@@ -338,9 +338,9 @@
 
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showTab('dashboard')">Revenue Dashboard</button>
+            <button class="nav-tab" onclick="showTab('settings')">Experience Level Settings</button>
             <button class="nav-tab" onclick="showTab('recruitment')">Recruitment Tool</button>
             <button class="nav-tab" onclick="showTab('installers')">Installer Management</button>
-            <button class="nav-tab" onclick="showTab('settings')">Settings</button>
             <button class="nav-tab" onclick="window.location.href='/calendar-view.html'">📅 Calendar</button>
         </div>
 
@@ -507,6 +507,12 @@
         <div id="settings" class="tab-content">
             <div class="form-section">
                 <h3>Revenue Ranges by Experience Level</h3>
+                <p style="margin-bottom: 20px; color: #6c757d; line-height: 1.6;">
+                    Experience levels are defined based on years in the industry:
+                    <strong>Beginner</strong> (2-3 years), <strong>Intermediate</strong> (3-4 years),
+                    <strong>Advanced</strong> (4-5 years), and <strong>Expert</strong> (5+ years).
+                    Adjust the daily revenue expectations for each level below.
+                </p>
                 <div id="revenueRangesSettings">
                     <!-- Will be populated by JavaScript -->
                 </div>

@@ -504,7 +504,7 @@ async function initializeSettings() {
     settingsContainer.innerHTML = experienceLevels.map(level => `
         <div class="form-section">
             <h4>${level}</h4>
-            <div class="form-grid">
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                 ${scenarios.map(scenario => `
                     <div class="form-group">
                         <label for="${level.toLowerCase()}_${scenario}">${scenario.charAt(0).toUpperCase() + scenario.slice(1)} Case Daily Revenue</label>
