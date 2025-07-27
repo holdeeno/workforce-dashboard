@@ -508,12 +508,76 @@ function initializeSettings() {
                 ${scenarios.map(scenario => `
                     <div class="form-group">
                         <label for="${level.toLowerCase()}_${scenario}">${scenario.charAt(0).toUpperCase() + scenario.slice(1)} Case Daily Revenue</label>
-                        <input type="number" id="${level.toLowerCase()}_${scenario}" placeholder="Enter amount">
+                        <input type="text" id="${level.toLowerCase()}_${scenario}" placeholder="Enter amount">
                     </div>
                 `).join('')}
             </div>
         </div>
     `).join('');
+    
+    // Add formatting to settings inputs after they are created
+    setTimeout(() => {
+        experienceLevels.forEach(level => {
+            scenarios.forEach(scenario => {
+                const input = document.getElementById(`${level.toLowerCase()}_${scenario}`);
+                if (input) {
+                    // Set default values
+                    const defaults = {
+                        'beginner_worst': 2500,
+                        'beginner_base': 3250,
+                        'beginner_best': 4000,
+                        'intermediate_worst': 4000,
+                        'intermediate_base': 4750,
+                        'intermediate_best': 5500,
+                        'advanced_worst': 5500,
+                        'advanced_base': 6250,
+                        'advanced_best': 7000,
+                        'expert_worst': 7000,
+                        'expert_base': 7750,
+                        'expert_best': 8500
+                    };
+                    
+                    const key = `${level.toLowerCase()}_${scenario}`;
+                    if (defaults[key]) {
+                        input.value = defaults[key];
+                        input.dataset.numericValue = defaults[key];
+                        formatCurrencyInput(input);
+                    }
+                    
+                    // Add event listeners for formatting
+                    input.addEventListener('focus', function() {
+                        const currentValue = parseCurrencyInput(this);
+                        if (currentValue > 0) {
+                            this.dataset.numericValue = currentValue;
+                            this.value = currentValue.toString();
+                        }
+                    });
+                    
+                    input.addEventListener('blur', function() {
+                        const typedValue = parseFloat(this.value.replace(/[^0-9.]/g, ''));
+                        if (!isNaN(typedValue) && typedValue > 0) {
+                            this.dataset.numericValue = typedValue;
+                        }
+                        formatCurrencyInput(this);
+                    });
+                    
+                    input.addEventListener('input', function() {
+                        const value = parseFloat(this.value.replace(/[^0-9.]/g, ''));
+                        if (!isNaN(value)) {
+                            this.dataset.numericValue = value;
+                        }
+                    });
+                    
+                    input.addEventListener('keypress', function(e) {
+                        const char = String.fromCharCode(e.which);
+                        if (!char.match(/[0-9.]/) && !e.ctrlKey && !e.metaKey) {
+                            e.preventDefault();
+                        }
+                    });
+                }
+            });
+        });
+    }, 0);
 }
 
 // Save settings (placeholder)
