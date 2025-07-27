@@ -20,5 +20,23 @@
       "base": 7750,
       "best": 8500
     }
+  },
+  "season_dates": {
+    "pre_season": {
+      "start_date": "2025-09-03",
+      "end_date": "2025-09-28"
+    },
+    "in_season": {
+      "start_date": "2025-09-29",
+      "end_date": "2025-12-07"
+    },
+    "post_season": {
+      "start_date": "2025-12-08",
+      "end_date": "2026-02-01"
+    },
+    "off_season": {
+      "start_date": "2026-02-02",
+      "end_date": "2026-03-01"
+    }
   }
 }

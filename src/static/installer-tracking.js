@@ -749,6 +749,7 @@ async function loadSeasonDates() {
 // Set default season dates
 function setDefaultSeasonDates() {
     const currentYear = new Date().getFullYear();
+    // Set defaults that are properly consecutive with no gaps
     const defaults = {
         'pre-season': {
             start: `${currentYear}-08-01`,
@@ -764,9 +765,16 @@ function setDefaultSeasonDates() {
         },
         'off-season': {
             start: `${currentYear + 1}-02-01`,
-            end: `${currentYear + 1}-02-28`
+            end: `${currentYear + 1}-02-28`  // or 29 for leap years
         }
     };
+    
+    // Adjust for leap year if necessary
+    const nextYear = currentYear + 1;
+    const isLeapYear = (nextYear % 4 === 0 && nextYear % 100 !== 0) || (nextYear % 400 === 0);
+    if (isLeapYear) {
+        defaults['off-season'].end = `${nextYear}-02-29`;
+    }
     
     Object.keys(defaults).forEach(season => {
         const startInput = document.getElementById(`${season}-start`);
@@ -830,13 +838,19 @@ async function saveSeasonDates() {
 // Validate season dates
 function validateSeasonDates(seasonDates) {
     const seasons = ['pre_season', 'in_season', 'post_season', 'off_season'];
+    const seasonNames = {
+        'pre_season': 'Pre-Season',
+        'in_season': 'In-Season',
+        'post_season': 'Post-Season',
+        'off_season': 'Off-Season'
+    };
     
     // Check if all dates are filled
     for (const season of seasons) {
         if (!seasonDates[season].start_date || !seasonDates[season].end_date) {
             return {
                 valid: false,
-                message: `Please fill in all start and end dates for ${season.replace('_', ' ')}.`
+                message: `Please fill in all start and end dates for ${seasonNames[season]}.`
             };
         }
         
@@ -847,21 +861,36 @@ function validateSeasonDates(seasonDates) {
         if (endDate <= startDate) {
             return {
                 valid: false,
-                message: `End date must be after start date for ${season.replace('_', ' ')}.`
+                message: `End date must be after start date for ${seasonNames[season]}.`
             };
         }
     }
     
-    // Check for overlapping seasons
+    // Check for proper chronological order and no gaps
     for (let i = 0; i < seasons.length - 1; i++) {
-        const currentEnd = new Date(seasonDates[seasons[i]].end_date);
-        const nextStart = new Date(seasonDates[seasons[i + 1]].start_date);
+        const currentSeason = seasons[i];
+        const nextSeason = seasons[i + 1];
+        const currentEnd = new Date(seasonDates[currentSeason].end_date);
+        const nextStart = new Date(seasonDates[nextSeason].start_date);
         
+        // Check if seasons are in chronological order
         if (currentEnd >= nextStart) {
             return {
                 valid: false,
-                message: `${seasons[i].replace('_', ' ')} overlaps with ${seasons[i + 1].replace('_', ' ')}. Please adjust the dates.`
+                message: `${seasonNames[currentSeason]} must end before ${seasonNames[nextSeason]} begins.`
             };
+        }
+        
+        // Check for gaps between seasons (should be exactly 1 day)
+        const dayDifference = Math.floor((nextStart - currentEnd) / (1000 * 60 * 60 * 24));
+        if (dayDifference !== 1) {
+            if (dayDifference > 1) {
+                return {
+                    valid: false,
+                    message: `There is a ${dayDifference - 1} day gap between ${seasonNames[currentSeason]} and ${seasonNames[nextSeason]}. Seasons must be consecutive with no gaps.`
+                };
+            }
+            // This case is already covered by the chronological order check above
         }
     }
     
