@@ -11,16 +11,47 @@
             box-sizing: border-box;
         }
 
+        .top-nav {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .top-nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .top-nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .top-nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .top-nav-links a.active {
+            background: #3498db;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
         }
 
         .container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
@@ -297,6 +328,16 @@
     </style>
 </head>
 <body>
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <div class="top-nav-links">
+            <a href="/">Installer Dashboard</a>
+            <a href="/workforce-dashboard.html">Workforce Planning</a>
+            <a href="/calendar-view.html" class="active">Calendar View</a>
+            <a href="/recruitment.html">Recruitment</a>
+        </div>
+    </div>
+    
     <div class="container">
         <div class="header">
             <h1>Work Calendar</h1>

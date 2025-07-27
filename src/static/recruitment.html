@@ -7,6 +7,37 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        .top-nav {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .top-nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .top-nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .top-nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .top-nav-links a.active {
+            background: #3498db;
+        }
+
         .card {
             background: white;
             border-radius: 12px;
@@ -115,7 +146,7 @@
         
         .print-button {
             position: fixed;
-            top: 20px;
+            top: 70px;
             right: 20px;
             z-index: 1000;
         }
@@ -127,6 +158,16 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <div class="top-nav-links">
+            <a href="/">Installer Dashboard</a>
+            <a href="/workforce-dashboard.html">Workforce Planning</a>
+            <a href="/calendar-view.html">Calendar View</a>
+            <a href="/recruitment.html" class="active">Recruitment</a>
+        </div>
+    </div>
+    
     <button class="print-button btn btn-primary" onclick="window.print()">Print Report</button>
     
     <div class="container mx-auto px-4 py-8 max-w-6xl">
