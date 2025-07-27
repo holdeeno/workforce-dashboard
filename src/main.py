@@ -6,8 +6,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from src.models.user import db
-from src.routes.workforce import workforce_bp
-from src.routes.analytics import analytics_bp
 from src.routes.installer import installer_bp
 from src.routes.revenue_goals import revenue_goals_bp
 from src.routes.settings import settings_bp
@@ -18,8 +16,6 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 # Enable CORS for all routes
 CORS(app)
 
-app.register_blueprint(workforce_bp, url_prefix='/api/workforce')
-app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
 app.register_blueprint(installer_bp)
 app.register_blueprint(revenue_goals_bp, url_prefix='/api')
 app.register_blueprint(settings_bp, url_prefix='/api')
